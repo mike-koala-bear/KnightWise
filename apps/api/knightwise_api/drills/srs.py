@@ -145,21 +145,21 @@ def next_due_puzzle_id(
     if due_id is not None:
         return int(due_id)
 
+    seen_stmt = select(SrsCard.puzzle_id).where(SrsCard.user_id == user_id)
+    seen_ids = {row for (row,) in db.execute(seen_stmt).all()}
+
     if node_id is None:
-        fallback_stmt = select(Puzzle.id).limit(1)
+        fallback_stmt = select(Puzzle.id).order_by(Puzzle.id)
     else:
-        seen_stmt = select(SrsCard.puzzle_id).where(SrsCard.user_id == user_id)
-        seen_ids = {row for (row,) in db.execute(seen_stmt).all()}
         fallback_stmt = (
             select(Puzzle.id)
             .join(NodePuzzle, NodePuzzle.puzzle_id == Puzzle.id)
             .where(NodePuzzle.node_id == node_id)
             .order_by(NodePuzzle.position)
         )
-        rows = [int(r) for (r,) in db.execute(fallback_stmt).all()]
-        for rid in rows:
-            if rid not in seen_ids:
-                return rid
-        return rows[0] if rows else None
 
-    return db.execute(fallback_stmt).scalar_one_or_none()
+    rows = [int(r) for (r,) in db.execute(fallback_stmt).all()]
+    for rid in rows:
+        if rid not in seen_ids:
+            return rid
+    return None

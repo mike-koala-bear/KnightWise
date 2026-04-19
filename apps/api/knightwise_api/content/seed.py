@@ -115,6 +115,10 @@ def seed_nodes_and_puzzles(db: Session, seed_path: Path | None = None) -> SeedRe
                 db.add(NodeEdge(from_node_id=from_id, to_node_id=to_id, edge_type="prereq"))
                 report.edges_inserted += 1
 
+    # Per-node running counter so `position` reflects the puzzle's ordering within
+    # the node (what `next_due_puzzle_id` relies on), not the node's index within
+    # the puzzle's `nodes` list.
+    node_position: dict[int, int] = {}
     for puzzle_data in data.get("puzzles", []):
         puzzle, inserted = _upsert_puzzle(db, puzzle_data)
         if inserted:
@@ -122,10 +126,12 @@ def seed_nodes_and_puzzles(db: Session, seed_path: Path | None = None) -> SeedRe
         else:
             report.puzzles_updated += 1
 
-        for position, node_slug in enumerate(puzzle_data.get("nodes", [])):
+        for node_slug in puzzle_data.get("nodes", []):
             node_id = slug_to_id.get(node_slug)
             if node_id is None:
                 continue
+            position = node_position.get(node_id, 0)
+            node_position[node_id] = position + 1
             existing_link = db.execute(
                 select(NodePuzzle).where(
                     NodePuzzle.node_id == node_id, NodePuzzle.puzzle_id == puzzle.id
@@ -134,6 +140,8 @@ def seed_nodes_and_puzzles(db: Session, seed_path: Path | None = None) -> SeedRe
             if existing_link is None:
                 db.add(NodePuzzle(node_id=node_id, puzzle_id=puzzle.id, position=position))
                 report.node_puzzle_links_inserted += 1
+            else:
+                existing_link.position = position
 
     db.commit()
     return report

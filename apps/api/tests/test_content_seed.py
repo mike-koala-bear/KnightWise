@@ -36,3 +36,53 @@ def test_seed_creates_prereq_edges(db_session):
     seed_nodes_and_puzzles(db_session)
     edges = db_session.query(NodeEdge).filter_by(edge_type="prereq").all()
     assert len(edges) >= 1
+
+
+def test_seed_updates_node_puzzle_position_on_reseed(db_session, tmp_path):
+    """Regression: position was frozen at first-seed value on re-seed."""
+    import json
+
+    seed_a = {
+        "nodes": [
+            {"slug": "n1", "domain": "tactics", "title": "N1"},
+        ],
+        "puzzles": [
+            {
+                "external_id": "p-a", "fen": "8/8/8/8/8/8/8/4K2k w - - 0 1",
+                "solution_uci": ["e1f1"], "themes": [], "rating": 1000,
+                "source": "t", "nodes": ["n1"],
+            },
+            {
+                "external_id": "p-b", "fen": "8/8/8/8/8/8/8/4K2k w - - 0 1",
+                "solution_uci": ["e1f1"], "themes": [], "rating": 1000,
+                "source": "t", "nodes": ["n1"],
+            },
+        ],
+    }
+    seed_b = {
+        "nodes": seed_a["nodes"],
+        # swap order -> positions should flip
+        "puzzles": [seed_a["puzzles"][1], seed_a["puzzles"][0]],
+    }
+    # initial positions: p-a=0, p-b=1
+    path_a = tmp_path / "a.json"
+    path_a.write_text(json.dumps(seed_a))
+    seed_nodes_and_puzzles(db_session, seed_path=path_a)
+
+    node = db_session.query(Node).filter_by(slug="n1").one()
+    links = {
+        db_session.query(Puzzle).get(link.puzzle_id).external_id: link.position
+        for link in db_session.query(NodePuzzle).filter_by(node_id=node.id).all()
+    }
+    assert links == {"p-a": 0, "p-b": 1}
+
+    # re-seed with swapped order -> positions must update
+    path_b = tmp_path / "b.json"
+    path_b.write_text(json.dumps(seed_b))
+    seed_nodes_and_puzzles(db_session, seed_path=path_b)
+
+    links = {
+        db_session.query(Puzzle).get(link.puzzle_id).external_id: link.position
+        for link in db_session.query(NodePuzzle).filter_by(node_id=node.id).all()
+    }
+    assert links == {"p-b": 0, "p-a": 1}

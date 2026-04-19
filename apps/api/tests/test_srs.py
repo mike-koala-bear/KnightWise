@@ -52,13 +52,47 @@ def test_record_attempt_and_next_due(db_session):
     # unattempted puzzle comes back when no srs card exists
     assert next_due_puzzle_id(db_session, user_id=user.id, node_id=node.id) == puzzle.id
 
-    # after a correct attempt, due_at moves +1 day; not due now
+    # after a correct attempt, due_at moves +1 day; puzzle is seen and not due, so None
     record_attempt(db_session, user_id=user.id, puzzle_id=puzzle.id, correct=True, time_ms=5000)
     now = datetime.now(UTC)
-    assert next_due_puzzle_id(db_session, user_id=user.id, node_id=node.id, now=now) is not None  # fallback picks the only one
+    assert next_due_puzzle_id(db_session, user_id=user.id, node_id=node.id, now=now) is None
 
-    # but explicitly asking before its due_at returns no due card (only fallback)
-    early = now - timedelta(hours=1)
-    due_only = next_due_puzzle_id(db_session, user_id=user.id, node_id=None, now=early)
-    # with node_id=None and no due cards, it falls through to first puzzle
-    assert due_only is None or due_only == puzzle.id
+    # much later, the card is due -> returns the seen puzzle for review
+    future = now + timedelta(days=2)
+    assert next_due_puzzle_id(db_session, user_id=user.id, node_id=node.id, now=future) == puzzle.id
+
+
+def test_next_due_skips_seen_puzzle_when_no_node(db_session):
+    """Regression: node_id=None path used to return the same puzzle forever."""
+    user = User(display_name="u2", lichess_username="u2")
+    db_session.add(user)
+    db_session.commit()
+
+    p1 = Puzzle(
+        external_id="n-1", fen="8/8/8/8/8/8/8/4K2k w - - 0 1",
+        solution_uci=["e1f1"], themes=[], rating=1000, source="t",
+    )
+    p2 = Puzzle(
+        external_id="n-2", fen="8/8/8/8/8/8/8/4K2k w - - 0 1",
+        solution_uci=["e1f1"], themes=[], rating=1000, source="t",
+    )
+    db_session.add_all([p1, p2])
+    db_session.commit()
+
+    first = next_due_puzzle_id(db_session, user_id=user.id, node_id=None)
+    assert first == p1.id
+
+    record_attempt(
+        db_session, user_id=user.id, puzzle_id=p1.id, correct=True, time_ms=5000
+    )
+    # Before p1's due_at, node_id=None should skip p1 and return p2
+    early = datetime.now(UTC)
+    second = next_due_puzzle_id(db_session, user_id=user.id, node_id=None, now=early)
+    assert second == p2.id
+
+    # After both are attempted, no unseen puzzles, no due cards -> None
+    record_attempt(
+        db_session, user_id=user.id, puzzle_id=p2.id, correct=True, time_ms=5000
+    )
+    third = next_due_puzzle_id(db_session, user_id=user.id, node_id=None, now=early)
+    assert third is None
