@@ -1,0 +1,27 @@
+[project]
+name = "knightwise-workspace"
+version = "0.1.0"
+description = "KnightWise Python workspace root"
+requires-python = ">=3.13"
+
+[tool.uv.workspace]
+members = ["apps/api"]
+
+[dependency-groups]
+dev = [
+  "ruff>=0.7.0,<0.8",
+  "pytest>=8.3.3,<9",
+  "pytest-asyncio>=0.24.0,<0.25",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = [".venv", "**/migrations/versions", "node_modules"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"

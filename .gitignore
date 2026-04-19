@@ -1,0 +1,38 @@
+# Node
+node_modules/
+.next/
+.turbo/
+out/
+dist/
+*.log
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.python-version
+
+# Env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# DB
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
+
+# Misc
+coverage/
+.cache/
