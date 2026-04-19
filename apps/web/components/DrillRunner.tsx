@@ -108,8 +108,9 @@ export function DrillRunner({ nodeSlug }: Props) {
   }
 
   const orientation = (() => {
-    if (!currentFen) return 'white';
-    const parts = currentFen.split(' ');
+    const fen = drill?.puzzle?.fen ?? '';
+    if (!fen) return 'white';
+    const parts = fen.split(' ');
     return parts[1] === 'w' ? 'white' : 'black';
   })();
 
