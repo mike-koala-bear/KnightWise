@@ -53,3 +53,20 @@ def test_attempt_full_flow(client, db_session):
     body = r.json()
     assert body["repetitions"] == 1
     assert body["interval_days"] == 1
+
+
+def test_attempt_unknown_puzzle_returns_404(client, db_session):
+    seed_nodes_and_puzzles(db_session)
+    client.get("/v1/drills/next?node_slug=back-rank-basics")
+    r = client.post(
+        "/v1/drills/attempt",
+        json={
+            "user_id": 1,
+            "puzzle_id": 999_999,
+            "correct": True,
+            "time_ms": 1000,
+            "hints_used": 0,
+        },
+    )
+    assert r.status_code == 404
+    assert "puzzle not found" in r.json()["detail"]

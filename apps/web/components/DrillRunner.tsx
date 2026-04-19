@@ -93,15 +93,36 @@ export function DrillRunner({ nodeSlug }: Props) {
     } catch {
       return false;
     }
+
+    // Standard puzzle convention: solution_uci alternates user / opponent / user.
+    // After the user's correct move, auto-play any consecutive opponent responses
+    // so the user is only ever prompted for their own moves.
+    let idx = solutionIndex + 1;
+    const solution = drill.puzzle.solution_uci;
+    while (idx < solution.length && idx % 2 === 1) {
+      const opp = solution[idx];
+      if (!opp) break;
+      try {
+        const oppMove: { from: string; to: string; promotion?: string } = {
+          from: opp.slice(0, 2),
+          to: opp.slice(2, 4),
+        };
+        const oppPromo = opp.slice(4) || undefined;
+        if (oppPromo) oppMove.promotion = oppPromo;
+        game.move(oppMove);
+      } catch {
+        break;
+      }
+      idx += 1;
+    }
     setCurrentFen(game.fen());
 
-    const nextIdx = solutionIndex + 1;
-    if (nextIdx >= drill.puzzle.solution_uci.length) {
+    if (idx >= solution.length) {
       setStatus('solved');
       setMessage('Solved!');
       submitAttempt(true, Date.now() - startedAt);
     } else {
-      setSolutionIndex(nextIdx);
+      setSolutionIndex(idx);
       setMessage('Right. Keep going…');
     }
     return true;

@@ -102,6 +102,10 @@ def submit_attempt(req: AttemptRequest, db: DBSession) -> AttemptResponse:
     if user is None:
         raise HTTPException(status_code=404, detail=f"user not found: {req.user_id}")
 
+    puzzle = db.execute(select(Puzzle).where(Puzzle.id == req.puzzle_id)).scalar_one_or_none()
+    if puzzle is None:
+        raise HTTPException(status_code=404, detail=f"puzzle not found: {req.puzzle_id}")
+
     card = record_attempt(
         db,
         user_id=req.user_id,
