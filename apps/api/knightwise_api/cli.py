@@ -15,6 +15,7 @@ from typing import cast
 
 from sqlalchemy import select
 
+from .content import seed_nodes_and_puzzles
 from .db import SessionLocal
 from .engine.analysis import StockfishUnavailableError
 from .engine.pipeline import analyze_and_store
@@ -85,6 +86,18 @@ def cmd_analyze_all(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_seed_nodes(_: argparse.Namespace) -> int:
+    with SessionLocal() as db:
+        report = seed_nodes_and_puzzles(db)
+    print(
+        f"seed: nodes {report.nodes_inserted}+/{report.nodes_updated}~  "
+        f"puzzles {report.puzzles_inserted}+/{report.puzzles_updated}~  "
+        f"edges {report.edges_inserted}+  "
+        f"node_puzzle_links {report.node_puzzle_links_inserted}+"
+    )
+    return 0
+
+
 def cmd_games(_: argparse.Namespace) -> int:
     with SessionLocal() as db:
         rows = db.execute(
@@ -123,6 +136,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_games = sub.add_parser("games", help="List recently ingested games")
     p_games.set_defaults(func=cmd_games)
+
+    p_seed = sub.add_parser("seed-nodes", help="Seed authored lesson nodes + puzzles")
+    p_seed.set_defaults(func=cmd_seed_nodes)
 
     return p
 

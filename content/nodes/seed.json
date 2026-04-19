@@ -1,0 +1,207 @@
+{
+  "$description": "First 10 authored nodes for the Galaxy Path. Real content (mdx) lives under content/nodes/<slug>/. For the MVP the description field is what the drill page shows.",
+  "nodes": [
+    {
+      "slug": "back-rank-basics",
+      "domain": "tactics",
+      "title": "Back-Rank Weakness",
+      "description": "If your king sits on the first rank with no luft and all three files in front are obstructed, a single rook/queen on the back rank can mate you. Spot it. Prevent it. Exploit it.",
+      "rating_min": 800,
+      "rating_max": 1800,
+      "branch_group": "tactics-intro",
+      "prereqs": []
+    },
+    {
+      "slug": "knight-forks-basics",
+      "domain": "tactics",
+      "title": "Knight Forks",
+      "description": "The knight's L-shape attacks two squares at once. Look for any move that puts your knight on a square attacking two enemy pieces (or king + piece).",
+      "rating_min": 600,
+      "rating_max": 1600,
+      "branch_group": "tactics-intro",
+      "prereqs": []
+    },
+    {
+      "slug": "absolute-pins",
+      "domain": "tactics",
+      "title": "Absolute Pins",
+      "description": "When a piece is pinned to its king, it can't move. Attack it again with anything you have; it can't run.",
+      "rating_min": 900,
+      "rating_max": 1800,
+      "branch_group": "tactics-intro",
+      "prereqs": ["knight-forks-basics"]
+    },
+    {
+      "slug": "skewers-intro",
+      "domain": "tactics",
+      "title": "Skewers",
+      "description": "A skewer is a reverse pin: a valuable piece is in front, forced to move, exposing a less valuable piece behind it to capture.",
+      "rating_min": 1000,
+      "rating_max": 1800,
+      "branch_group": "tactics-intro",
+      "prereqs": ["absolute-pins"]
+    },
+    {
+      "slug": "double-attack",
+      "domain": "tactics",
+      "title": "Double Attack",
+      "description": "Any single move that creates two threats wins material. Train the eye to see every move as a potential double attack.",
+      "rating_min": 1100,
+      "rating_max": 2000,
+      "branch_group": "tactics-intro",
+      "prereqs": ["knight-forks-basics", "absolute-pins"]
+    },
+    {
+      "slug": "discovered-attack",
+      "domain": "tactics",
+      "title": "Discovered Attack",
+      "description": "Moving one piece unmasks another's attack. The moving piece can make its own threat for free.",
+      "rating_min": 1200,
+      "rating_max": 2100,
+      "branch_group": "tactics-intro",
+      "prereqs": ["double-attack"]
+    },
+    {
+      "slug": "opposition-basics",
+      "domain": "endgame",
+      "title": "King Opposition",
+      "description": "In king-and-pawn endgames, whichever king has the *opposition* (the other is forced to give way) controls the critical squares.",
+      "rating_min": 1000,
+      "rating_max": 2000,
+      "branch_group": "endgame-intro",
+      "prereqs": []
+    },
+    {
+      "slug": "kp-vs-k-technique",
+      "domain": "endgame",
+      "title": "K + P vs K",
+      "description": "Key squares and opposition decide this endgame. Know when to promote vs. when you're drawn.",
+      "rating_min": 1100,
+      "rating_max": 2000,
+      "branch_group": "endgame-intro",
+      "prereqs": ["opposition-basics"]
+    },
+    {
+      "slug": "kr-vs-k-technique",
+      "domain": "endgame",
+      "title": "K + R vs K",
+      "description": "Walk the opposing king to the edge with a rook-king pair. 'Build the box', step the king in, mate.",
+      "rating_min": 900,
+      "rating_max": 1800,
+      "branch_group": "endgame-intro",
+      "prereqs": []
+    },
+    {
+      "slug": "passed-pawn-technique",
+      "domain": "endgame",
+      "title": "Passed Pawns",
+      "description": "Passed pawns must be pushed. Support them, don't leave them. A passed pawn that reaches the 7th rank ties down two enemy pieces.",
+      "rating_min": 1200,
+      "rating_max": 2100,
+      "branch_group": "endgame-intro",
+      "prereqs": ["opposition-basics"]
+    }
+  ],
+  "puzzles": [
+    {
+      "external_id": "kw-back-rank-1",
+      "fen": "6k1/5ppp/8/8/8/8/5PPP/4R1K1 w - - 0 1",
+      "solution_uci": ["e1e8"],
+      "themes": ["back-rank", "mate-in-1"],
+      "rating": 1000,
+      "source": "knightwise",
+      "description": "Find the back-rank mate.",
+      "nodes": ["back-rank-basics"]
+    },
+    {
+      "external_id": "kw-back-rank-2",
+      "fen": "r5k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1",
+      "solution_uci": ["a1a8"],
+      "themes": ["back-rank", "exchange"],
+      "rating": 1100,
+      "source": "knightwise",
+      "description": "Trade rooks off to reach a winning pawn endgame — or is there mate?",
+      "nodes": ["back-rank-basics"]
+    },
+    {
+      "external_id": "kw-knight-fork-1",
+      "fen": "r1bqk2r/ppp2ppp/2n2n2/3pp3/1bBPP3/2N2N2/PPP2PPP/R1BQK2R w KQkq - 0 6",
+      "solution_uci": ["f3e5"],
+      "themes": ["fork", "knight-fork"],
+      "rating": 1200,
+      "source": "knightwise",
+      "description": "A knight jump wins a center pawn and threatens a fork.",
+      "nodes": ["knight-forks-basics"]
+    },
+    {
+      "external_id": "kw-pin-1",
+      "fen": "rnbqkb1r/pppp1ppp/5n2/4p3/4P3/2N5/PPPP1PPP/R1BQKBNR w KQkq - 2 3",
+      "solution_uci": ["f1b5"],
+      "themes": ["pin", "opening"],
+      "rating": 900,
+      "source": "knightwise",
+      "description": "Pin the knight to the king.",
+      "nodes": ["absolute-pins"]
+    },
+    {
+      "external_id": "kw-skewer-1",
+      "fen": "4k3/8/8/8/8/8/4K3/2R1q3 w - - 0 1",
+      "solution_uci": ["c1c8"],
+      "themes": ["skewer", "queen-win"],
+      "rating": 1200,
+      "source": "knightwise",
+      "description": "Skewer the king to win the queen.",
+      "nodes": ["skewers-intro"]
+    },
+    {
+      "external_id": "kw-double-1",
+      "fen": "r3k2r/ppp2ppp/2n5/3P4/1b6/2N5/PP3PPP/R1BQKB1R b KQkq - 0 1",
+      "solution_uci": ["b4c3"],
+      "themes": ["double-attack"],
+      "rating": 1400,
+      "source": "knightwise",
+      "description": "Win material with a pin + capture sequence.",
+      "nodes": ["double-attack"]
+    },
+    {
+      "external_id": "kw-discovered-1",
+      "fen": "r1bqk2r/pppp1ppp/2n2n2/4p3/1bB1P3/2NP1N2/PPP2PPP/R1BQK2R w KQkq - 0 1",
+      "solution_uci": ["c4f7"],
+      "themes": ["discovered-attack"],
+      "rating": 1500,
+      "source": "knightwise",
+      "description": "A sacrifice exposes the king.",
+      "nodes": ["discovered-attack"]
+    },
+    {
+      "external_id": "kw-kp-1",
+      "fen": "8/8/8/3k4/8/3K4/3P4/8 w - - 0 1",
+      "solution_uci": ["d3d4"],
+      "themes": ["opposition", "kp-vs-k"],
+      "rating": 1200,
+      "source": "knightwise",
+      "description": "Take the opposition to promote.",
+      "nodes": ["opposition-basics", "kp-vs-k-technique"]
+    },
+    {
+      "external_id": "kw-kr-1",
+      "fen": "8/8/8/3k4/8/8/3R4/3K4 w - - 0 1",
+      "solution_uci": ["d2h2"],
+      "themes": ["kr-vs-k", "mating-net"],
+      "rating": 1100,
+      "source": "knightwise",
+      "description": "Start building the mating net.",
+      "nodes": ["kr-vs-k-technique"]
+    },
+    {
+      "external_id": "kw-passed-1",
+      "fen": "8/1p6/8/2k5/8/2K5/1P6/8 w - - 0 1",
+      "solution_uci": ["b2b4"],
+      "themes": ["passed-pawn", "kp-race"],
+      "rating": 1400,
+      "source": "knightwise",
+      "description": "Push the passer — every tempo matters.",
+      "nodes": ["passed-pawn-technique"]
+    }
+  ]
+}
