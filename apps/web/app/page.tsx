@@ -1,18 +1,56 @@
-import { Board } from '@/components/Board';
-import { STARTING_FEN } from '@knightwise/chess';
+import Link from 'next/link';
+
+import { RatingTracker } from '@/components/RatingTracker';
 
 export default function Home() {
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col items-center gap-8 px-6 py-12">
+    <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-8 px-6 py-12">
       <header className="text-center">
         <h1 className="text-4xl font-bold tracking-tight">KnightWise</h1>
         <p className="mt-2 text-sm text-slate-400">
-          Personal MVP scaffold — PR #1. Chess analysis lands in PR #2.
+          Personal chess coach · Stockfish 17.1 · Maia-3 · GPT-4o-mini
         </p>
       </header>
 
-      <section className="w-full max-w-md">
-        <Board fen={STARTING_FEN} />
+      <RatingTracker userId={1} days={7} />
+
+      <section className="grid gap-3 sm:grid-cols-3">
+        <Link
+          href={{ pathname: '/warp' }}
+          className="rounded-lg border border-indigo-500/40 bg-indigo-500/10 p-4 transition hover:bg-indigo-500/20"
+        >
+          <div className="text-xs uppercase tracking-wider text-indigo-300">
+            Today
+          </div>
+          <div className="mt-1 text-lg font-semibold">Daily Warp</div>
+          <p className="mt-1 text-xs text-slate-400">
+            15 minutes on your #1 weakness.
+          </p>
+        </Link>
+        <Link
+          href={{ pathname: '/galaxy' }}
+          className="rounded-lg border border-white/10 bg-white/5 p-4 transition hover:bg-white/10"
+        >
+          <div className="text-xs uppercase tracking-wider text-slate-400">
+            Map
+          </div>
+          <div className="mt-1 text-lg font-semibold">Galaxy Path</div>
+          <p className="mt-1 text-xs text-slate-400">
+            Browse the full curriculum and jump to any topic.
+          </p>
+        </Link>
+        <Link
+          href="/drill"
+          className="rounded-lg border border-white/10 bg-white/5 p-4 transition hover:bg-white/10"
+        >
+          <div className="text-xs uppercase tracking-wider text-slate-400">
+            Freeplay
+          </div>
+          <div className="mt-1 text-lg font-semibold">Drill runner</div>
+          <p className="mt-1 text-xs text-slate-400">
+            Solve the next SRS-due puzzle.
+          </p>
+        </Link>
       </section>
 
       <footer className="text-center text-xs text-slate-500">
