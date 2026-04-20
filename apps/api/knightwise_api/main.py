@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routers import analyze, health
+from .routers import analyze, games, health, ingest
 from .settings import settings
 
 
@@ -22,6 +22,8 @@ def create_app() -> FastAPI:
 
     app.include_router(health.router)
     app.include_router(analyze.router, prefix="/v1")
+    app.include_router(ingest.router, prefix="/v1")
+    app.include_router(games.router, prefix="/v1")
     return app
 
 

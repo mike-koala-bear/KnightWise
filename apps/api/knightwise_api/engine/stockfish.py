@@ -26,7 +26,7 @@ class AnalysisResult:
     best_move: str | None
 
 
-def _resolve_stockfish_path() -> Path:
+def resolve_stockfish_path() -> Path:
     configured = Path(settings.stockfish_path)
     if configured.exists():
         return configured
@@ -40,7 +40,7 @@ def _resolve_stockfish_path() -> Path:
 
 
 def analyze_fen(fen: str, depth: int = 14) -> AnalysisResult:
-    path = _resolve_stockfish_path()
+    path = resolve_stockfish_path()
     try:
         board = chess.Board(fen)
     except ValueError as e:
