@@ -27,11 +27,31 @@ def test_sm2_correct_third_scales_by_ease():
     assert out.interval_days >= 6 * 2  # ~15
 
 
-def test_sm2_failure_resets():
-    out = sm2_update(_state(reps=5, interval=30), quality=1, now=datetime(2024, 1, 1, tzinfo=UTC))
+def test_sm2_failure_resets_and_is_due_immediately():
+    now = datetime(2024, 1, 1, tzinfo=UTC)
+    out = sm2_update(_state(reps=5, interval=30), quality=1, now=now)
     assert out.repetitions == 0
-    assert out.interval_days == 1
+    assert out.interval_days == 0
+    assert out.due_at <= now  # immediately re-due for re-learning
     assert out.ease < 2.5
+
+
+def test_failure_then_next_due_returns_same_puzzle(db_session):
+    """Regression: wrong attempt used to schedule card +1d, leaving 'No drills available'."""
+    user = User(display_name="u", lichess_username="u")
+    db_session.add(user)
+    db_session.commit()
+
+    puzzle = Puzzle(
+        external_id="f-1", fen="8/8/8/8/8/8/8/4K2k w - - 0 1",
+        solution_uci=["e1f1"], themes=[], rating=1000, source="t",
+    )
+    db_session.add(puzzle)
+    db_session.commit()
+
+    record_attempt(db_session, user_id=user.id, puzzle_id=puzzle.id, correct=False, time_ms=5000)
+    # After a wrong attempt the card should still be due so the user can retry
+    assert next_due_puzzle_id(db_session, user_id=user.id, node_id=None) == puzzle.id
 
 
 def test_record_attempt_and_next_due(db_session):
