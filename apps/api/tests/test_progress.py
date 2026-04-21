@@ -1,6 +1,6 @@
 from datetime import UTC, datetime, timedelta
 
-from knightwise_api.models import PuzzleAttempt, Puzzle, User
+from knightwise_api.models import Puzzle, PuzzleAttempt, User
 from knightwise_api.progress import drills_solved_today, streak_stats
 
 
