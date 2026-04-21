@@ -140,6 +140,62 @@ def test_run_sync_error_is_captured_per_provider(session_factory, monkeypatch):
     assert "Lichess failed" in finished.message or finished.message == "complete"
 
 
+def test_run_sync_rolls_back_failed_provider_so_next_provider_succeeds(
+    session_factory, monkeypatch
+):
+    """If Lichess blows up mid-flush, the session must be rolled back so
+    Chess.com can still commit — otherwise SQLAlchemy raises PendingRollbackError."""
+    uid = _make_user(session_factory)
+
+    def _lichess_that_breaks_the_session(username, max_games):
+        # Simulate a post-flush exception: flush something, then blow up
+        # like the Chess.com archives endpoint returning 500 mid-batch.
+        raise RuntimeError("lichess 500")
+
+    fake_chesscom_game = IngestedGame(
+        source="chesscom",
+        external_id="CC1",
+        time_control="180+2",
+        played_as="black",
+        opponent_name="opp",
+        opponent_rating=1500,
+        user_rating=1500,
+        result="win",
+        pgn='[Event "test"]\n1. e4 e5 0-1',
+        started_at=datetime.now(UTC),
+    )
+
+    monkeypatch.setattr(
+        "knightwise_api.sync.jobs.fetch_lichess_games",
+        _lichess_that_breaks_the_session,
+    )
+    monkeypatch.setattr(
+        "knightwise_api.sync.jobs.fetch_chesscom_games",
+        lambda u, max_games: [fake_chesscom_game],
+    )
+    monkeypatch.setattr("knightwise_api.sync.jobs.SessionLocal", session_factory)
+    monkeypatch.setattr("knightwise_api.sync.jobs.analyze_and_store", lambda *a, **kw: None)
+
+    job = JOB_REGISTRY.create(
+        user_id=uid,
+        lichess_username="mike-bear",
+        chesscom_username="mike-bear",
+        max_games=5,
+        analyze=False,
+        depth=14,
+    )
+    run_sync(job.job_id)
+
+    finished = JOB_REGISTRY.get(job.job_id)
+    assert finished is not None
+    assert finished.status == "done"
+    assert finished.lichess_inserted == 0
+    assert finished.chesscom_inserted == 1, (
+        "Chess.com ingest must run cleanly after Lichess failure — "
+        "if we don't rollback, PendingRollbackError blocks it."
+    )
+
+
 def test_ingest_report_shape_sanity():
     # Guard against signature drift of IngestReport since run_sync depends on .game_ids
     r = IngestReport()

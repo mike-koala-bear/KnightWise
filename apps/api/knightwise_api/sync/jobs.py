@@ -132,7 +132,10 @@ def run_sync(job_id: str) -> None:
                     lichess_inserted=report.inserted,
                 )
                 inserted_game_ids.extend(report.game_ids)
-            except Exception as e:  # network, API, parse errors
+            except Exception as e:  # network, API, parse, or DB errors
+                # SQLAlchemy needs an explicit rollback after a failed flush/commit;
+                # otherwise the next DB op raises PendingRollbackError.
+                db.rollback()
                 logger.exception("lichess ingest failed for job %s", job_id)
                 JOB_REGISTRY.update(job_id, message=f"Lichess failed: {e}")
 
@@ -148,6 +151,7 @@ def run_sync(job_id: str) -> None:
                 )
                 inserted_game_ids.extend(report.game_ids)
             except Exception as e:
+                db.rollback()
                 logger.exception("chess.com ingest failed for job %s", job_id)
                 JOB_REGISTRY.update(job_id, message=f"Chess.com failed: {e}")
 
@@ -165,9 +169,11 @@ def run_sync(job_id: str) -> None:
                     analyzed += 1
                 except StockfishUnavailableError as e:
                     failed += 1
+                    db.rollback()
                     logger.warning("Stockfish unavailable for game %s: %s", gid, e)
                 except Exception as e:
                     failed += 1
+                    db.rollback()
                     logger.exception("analyze failed for game %s in job %s", gid, job_id)
                     JOB_REGISTRY.update(job_id, message=f"analyze error on game {gid}: {e}")
                 JOB_REGISTRY.update(job_id, games_analyzed=analyzed, games_failed=failed)
