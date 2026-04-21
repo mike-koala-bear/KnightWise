@@ -51,8 +51,11 @@ def sm2_update(state: SrsState, quality: int, now: datetime | None = None) -> Sr
     ease = max(1.3, state.ease + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)))
 
     if quality < 3:
+        # Failure: card is immediately due again so the user can retry the
+        # same puzzle within the session ("re-learning" queue). Anki uses a
+        # ~10-minute delay; for local single-user practice we go to zero.
         repetitions = 0
-        interval_days = 1
+        interval_days = 0
     else:
         repetitions = state.repetitions + 1
         if repetitions == 1:
@@ -62,7 +65,12 @@ def sm2_update(state: SrsState, quality: int, now: datetime | None = None) -> Sr
         else:
             interval_days = max(1, round(state.interval_days * ease))
 
-    due_at = now + timedelta(days=interval_days)
+    if interval_days == 0:
+        # Immediately due. We subtract 1 second so `due_at <= now` queries
+        # return the card on this same tick without clock fuzz.
+        due_at = now - timedelta(seconds=1)
+    else:
+        due_at = now + timedelta(days=interval_days)
     return SrsState(ease=ease, interval_days=interval_days, repetitions=repetitions, due_at=due_at)
 
 

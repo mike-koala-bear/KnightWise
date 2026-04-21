@@ -1,3 +1,4 @@
+import { DailyProgress } from '@/components/DailyProgress';
 import { RatingTracker } from '@/components/RatingTracker';
 import { WarpView } from '@/components/WarpView';
 
@@ -10,7 +11,10 @@ export default function WarpPage() {
           Your 15-minute personalized training session, composed from your last games.
         </p>
       </header>
-      <RatingTracker userId={1} days={7} />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <RatingTracker userId={1} days={7} />
+        <DailyProgress userId={1} target={8} />
+      </div>
       <WarpView userId={1} />
     </main>
   );
