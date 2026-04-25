@@ -253,6 +253,15 @@ def onboarding_attempt(req: AttemptIn, db: DBSession) -> AttemptOut:
 def onboarding_finish(req: FinishIn, db: DBSession) -> OnboardingStateOut:
     user = _require_user(db, req.user_id)
     if user.onboarding_completed_at is None:
+        # Refuse to stamp completion before the stopping rule is satisfied.
+        # Otherwise a client could call start → finish and bypass calibration
+        # while keeping the default 1500/350 rating.
+        state = _state(db, user)
+        if not _is_done(state):
+            raise HTTPException(
+                status_code=409,
+                detail="onboarding session is not yet complete",
+            )
         user.onboarding_completed_at = datetime.now(UTC).replace(tzinfo=None)
         db.commit()
         db.refresh(user)

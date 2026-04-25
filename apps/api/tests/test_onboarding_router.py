@@ -124,10 +124,36 @@ def test_attempt_unknown_puzzle_404(client, db_session):
     assert r.status_code == 404
 
 
+def _complete_session(client, db_session, user_id: int) -> None:
+    """Solve every served puzzle correctly until the session reports done."""
+    from knightwise_api.models import Puzzle as PuzzleModel
+    for _ in range(20):
+        nxt = client.get(f"/v1/onboarding/next?user_id={user_id}").json()
+        if nxt["done"] or nxt["puzzle"] is None:
+            return
+        pid = nxt["puzzle"]["id"]
+        expected = db_session.get(PuzzleModel, pid).solution_uci[0]
+        client.post(
+            "/v1/onboarding/attempt",
+            json={"user_id": user_id, "puzzle_id": pid, "move_uci": expected, "time_ms": 1},
+        )
+
+
+def test_finish_before_session_complete_returns_409(client, db_session):
+    """Bypass attempt: start → finish without any attempts must be rejected."""
+    seed_onboarding_puzzles(db_session)
+    user_id = _create_user(db_session)
+    client.post(f"/v1/onboarding/start?user_id={user_id}")
+
+    r = client.post("/v1/onboarding/finish", json={"user_id": user_id})
+    assert r.status_code == 409
+
+
 def test_finish_stamps_completed_at_idempotent(client, db_session):
     seed_onboarding_puzzles(db_session)
     user_id = _create_user(db_session)
     client.post(f"/v1/onboarding/start?user_id={user_id}")
+    _complete_session(client, db_session, user_id)
 
     r1 = client.post("/v1/onboarding/finish", json={"user_id": user_id})
     assert r1.status_code == 200
@@ -142,6 +168,7 @@ def test_attempt_after_finish_409(client, db_session):
     seed_onboarding_puzzles(db_session)
     user_id = _create_user(db_session)
     client.post(f"/v1/onboarding/start?user_id={user_id}")
+    _complete_session(client, db_session, user_id)
     client.post("/v1/onboarding/finish", json={"user_id": user_id})
 
     nxt = client.get(f"/v1/onboarding/next?user_id={user_id}").json()
