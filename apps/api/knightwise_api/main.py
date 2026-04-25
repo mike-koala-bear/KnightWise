@@ -7,6 +7,7 @@ from .routers import (
     games,
     health,
     ingest,
+    llm,
     nodes,
     progress,
     rating,
@@ -41,6 +42,7 @@ def create_app() -> FastAPI:
     app.include_router(rating.router, prefix="/v1")
     app.include_router(progress.router, prefix="/v1")
     app.include_router(sync.router, prefix="/v1")
+    app.include_router(llm.router, prefix="/v1")
     return app
 
 

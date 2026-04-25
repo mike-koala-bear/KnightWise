@@ -105,6 +105,12 @@ export type SyncStatusResponse = {
   finished_at: string | null;
 };
 
+export type LLMHealth = {
+  model: string;
+  live: boolean;
+  reason: string;
+};
+
 export type GalaxyNode = {
   id: number;
   slug: string;

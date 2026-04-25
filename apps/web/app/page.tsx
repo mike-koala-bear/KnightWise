@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
+import { CoachStatusBadge } from '@/components/CoachStatusBadge';
 import { DailyProgress } from '@/components/DailyProgress';
 import { RatingTracker } from '@/components/RatingTracker';
 import { StreakBadge } from '@/components/StreakBadge';
@@ -18,7 +19,10 @@ export default function Home() {
         <p className="text-sm text-slate-400">
           Personal chess coach · Stockfish 17.1 · Maia-3 · GPT-4o-mini
         </p>
-        <StreakBadge userId={1} refreshKey={refreshKey} />
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <StreakBadge userId={1} refreshKey={refreshKey} />
+          <CoachStatusBadge />
+        </div>
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2">
