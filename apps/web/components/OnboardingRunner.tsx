@@ -125,7 +125,8 @@ export function OnboardingRunner({ userId }: Props) {
     return fen.split(' ')[1] === 'w' ? 'white' : 'black';
   })();
 
-  const state: OnboardingState | null = next?.state ?? lastAttempt?.state ?? null;
+  // lastAttempt holds the post-attempt state; next holds pre-attempt. Prefer post.
+  const state: OnboardingState | null = lastAttempt?.state ?? next?.state ?? null;
   const muRounded = state ? Math.round(state.rating_mu) : 1500;
   const sigmaRounded = state ? Math.round(state.rating_sigma) : 350;
   const attempts = state?.attempts_so_far ?? 0;

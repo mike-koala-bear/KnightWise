@@ -191,6 +191,24 @@ def onboarding_attempt(req: AttemptIn, db: DBSession) -> AttemptOut:
     if user.onboarding_completed_at is not None:
         raise HTTPException(status_code=409, detail="onboarding already completed")
 
+    # Server-side stopping rule: refuse new attempts once the session has
+    # converged or hit MAX_ATTEMPTS. The `done` flag in earlier responses is
+    # advisory only; this is the authoritative check.
+    pre_state = _state(db, user)
+    if _is_done(pre_state):
+        raise HTTPException(
+            status_code=409,
+            detail="onboarding session is complete; call /finish",
+        )
+
+    # Block duplicate-puzzle submissions so a client cannot rig the rating by
+    # re-attempting the same puzzle repeatedly.
+    if req.puzzle_id in _seen_ids(db, user.id):
+        raise HTTPException(
+            status_code=409,
+            detail=f"puzzle already attempted: {req.puzzle_id}",
+        )
+
     puzzle = db.execute(select(Puzzle).where(Puzzle.id == req.puzzle_id)).scalar_one_or_none()
     if puzzle is None:
         raise HTTPException(status_code=404, detail=f"puzzle not found: {req.puzzle_id}")

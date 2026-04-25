@@ -159,6 +159,64 @@ def test_attempt_after_finish_409(client, db_session):
     assert r.status_code == 409
 
 
+def test_attempt_rejects_duplicate_puzzle(client, db_session):
+    """A client cannot rig their rating by re-attempting the same puzzle."""
+    seed_onboarding_puzzles(db_session)
+    user_id = _create_user(db_session)
+    client.post(f"/v1/onboarding/start?user_id={user_id}")
+    nxt = client.get(f"/v1/onboarding/next?user_id={user_id}").json()
+    puzzle_id = nxt["puzzle"]["id"]
+
+    from knightwise_api.models import Puzzle as PuzzleModel
+    expected = db_session.get(PuzzleModel, puzzle_id).solution_uci[0]
+
+    # First attempt: ok.
+    r1 = client.post(
+        "/v1/onboarding/attempt",
+        json={"user_id": user_id, "puzzle_id": puzzle_id, "move_uci": expected, "time_ms": 1},
+    )
+    assert r1.status_code == 200
+
+    # Second attempt at same puzzle: rejected.
+    r2 = client.post(
+        "/v1/onboarding/attempt",
+        json={"user_id": user_id, "puzzle_id": puzzle_id, "move_uci": expected, "time_ms": 1},
+    )
+    assert r2.status_code == 409
+
+
+def test_attempt_rejected_after_session_done(client, db_session):
+    """Server enforces MAX_ATTEMPTS even if the client ignores `done=true`."""
+    seed_onboarding_puzzles(db_session)
+    user_id = _create_user(db_session)
+    client.post(f"/v1/onboarding/start?user_id={user_id}")
+
+    from knightwise_api.models import Puzzle as PuzzleModel
+    # Solve every puzzle correctly until session is done.
+    for _ in range(20):
+        nxt = client.get(f"/v1/onboarding/next?user_id={user_id}").json()
+        if nxt["done"] or nxt["puzzle"] is None:
+            break
+        pid = nxt["puzzle"]["id"]
+        expected = db_session.get(PuzzleModel, pid).solution_uci[0]
+        client.post(
+            "/v1/onboarding/attempt",
+            json={"user_id": user_id, "puzzle_id": pid, "move_uci": expected, "time_ms": 1},
+        )
+
+    # Pick any unseen puzzle id and try to submit anyway.
+    from knightwise_api.models import OnboardingAttempt as Att
+    seen = {row.puzzle_id for row in db_session.query(Att).filter_by(user_id=user_id).all()}
+    all_ids = {pid for (pid,) in db_session.query(PuzzleModel.id).all()}
+    unseen = next(iter(all_ids - seen))
+
+    r = client.post(
+        "/v1/onboarding/attempt",
+        json={"user_id": user_id, "puzzle_id": unseen, "move_uci": "e2e4", "time_ms": 1},
+    )
+    assert r.status_code == 409
+
+
 def test_full_session_terminates_within_max_attempts(client, db_session):
     """Solve every puzzle correctly and confirm the session finishes by
     MAX_ATTEMPTS even with all wins."""
