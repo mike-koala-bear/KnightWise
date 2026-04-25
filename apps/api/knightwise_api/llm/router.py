@@ -17,14 +17,22 @@ from ..settings import settings
 
 logger = logging.getLogger(__name__)
 
+#: The single LLM model used for ALL coaching calls. Locked by product
+#: decision — do not change without updating tests + cost docs.
+MODEL: str = "gpt-4o-mini"
+
 Purpose = Literal["coach_note", "lesson_hint", "weakness_explain", "test"]
 
 _SYSTEM_PROMPTS: dict[Purpose, str] = {
     "coach_note": (
-        "You are a warm, concise chess coach. The student has just finished a "
-        "game or drill session. In 2-3 sentences, name the single biggest "
-        "weakness pattern, explain why it loses material or tempo, and give "
-        "one concrete drill to fix it. Do not be verbose. Do not hedge."
+        "You are a warm, concise chess coach helping an adult improver gain "
+        "rating fast. The student has just finished a session. Reply with "
+        "exactly 2-3 sentences. Sentence 1: name the single biggest weakness "
+        "in plain English (no jargon). Sentence 2: name ONE concrete pattern "
+        "or check they should run on every move today (e.g. 'before every "
+        "move ask: is my back rank safe?'). Sentence 3 (optional): one "
+        "sentence of encouragement tied to their improvement, not generic. "
+        "Never hedge. Never say 'consider'. Never use bullet points."
     ),
     "lesson_hint": (
         "You are a patient chess tutor. Give a single-sentence hint that "
@@ -71,7 +79,7 @@ def generate(prompt: str, purpose: Purpose = "coach_note") -> str:
     client = OpenAI(api_key=settings.openai_api_key)
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=MODEL,
             messages=[
                 {"role": "system", "content": _SYSTEM_PROMPTS[purpose]},
                 {"role": "user", "content": prompt},
@@ -85,3 +93,18 @@ def generate(prompt: str, purpose: Purpose = "coach_note") -> str:
 
     content = response.choices[0].message.content or ""
     return content.strip() or _STUBS[purpose]
+
+
+def health() -> dict[str, str | bool]:
+    """Probe the LLM stack. Returns whether a real model call would be made.
+
+    Does NOT call the live API — just reports configuration. The frontend can
+    surface a 'AI coach: live' badge based on this.
+    """
+    if not settings.openai_api_key:
+        return {"model": MODEL, "live": False, "reason": "no_api_key"}
+    try:
+        import openai  # noqa: F401
+    except ImportError:
+        return {"model": MODEL, "live": False, "reason": "openai_not_installed"}
+    return {"model": MODEL, "live": True, "reason": "ok"}
