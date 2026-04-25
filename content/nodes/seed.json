@@ -145,12 +145,12 @@
     },
     {
       "external_id": "kw-skewer-1",
-      "fen": "4k3/8/8/8/8/8/4K3/2R1q3 w - - 0 1",
-      "solution_uci": ["c1c8"],
+      "fen": "4k3/8/4q3/8/8/8/4R3/3K4 w - - 0 1",
+      "solution_uci": ["e2e6"],
       "themes": ["skewer", "queen-win"],
-      "rating": 1200,
+      "rating": 1300,
       "source": "knightwise",
-      "description": "Skewer the king to win the queen.",
+      "description": "Win the queen on the e-file — the king is stuck behind her.",
       "nodes": ["skewers-intro"]
     },
     {
@@ -175,12 +175,12 @@
     },
     {
       "external_id": "kw-kp-1",
-      "fen": "8/8/8/3k4/8/3K4/3P4/8 w - - 0 1",
-      "solution_uci": ["d3d4"],
+      "fen": "8/8/3k4/8/3K4/8/3P4/8 w - - 0 1",
+      "solution_uci": ["d2d3"],
       "themes": ["opposition", "kp-vs-k"],
       "rating": 1200,
       "source": "knightwise",
-      "description": "Take the opposition to promote.",
+      "description": "Push the pawn — your king already controls the key squares.",
       "nodes": ["opposition-basics", "kp-vs-k-technique"]
     },
     {
@@ -202,6 +202,76 @@
       "source": "knightwise",
       "description": "Push the passer — every tempo matters.",
       "nodes": ["passed-pawn-technique"]
+    },
+    {
+      "external_id": "kw-back-rank-deflect",
+      "fen": "r5k1/5ppp/8/8/8/8/3R2PP/3R3K w - - 0 1",
+      "solution_uci": ["d2d8", "a8d8", "d1d8"],
+      "themes": ["back-rank", "deflection", "mate-in-2", "multi-step"],
+      "rating": 1500,
+      "source": "knightwise",
+      "description": "Sac the front rook to deflect the defender, then mate with the back rook.",
+      "nodes": ["back-rank-basics"]
+    },
+    {
+      "external_id": "kw-knight-fork-trade",
+      "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 4 4",
+      "solution_uci": ["c6d4", "f3d4", "e5d4"],
+      "themes": ["knight-fork", "trade-down", "multi-step"],
+      "rating": 1300,
+      "source": "knightwise",
+      "description": "Trade knights, then push the e-pawn to fork on d4.",
+      "nodes": ["knight-forks-basics"]
+    },
+    {
+      "external_id": "kw-smothered-mate-mini",
+      "fen": "5r1k/6pp/7N/8/8/1Q6/8/6K1 w - - 0 1",
+      "solution_uci": ["b3g8", "f8g8", "h6f7"],
+      "themes": ["smothered-mate", "queen-sac", "mate-in-2", "multi-step"],
+      "rating": 1700,
+      "source": "knightwise",
+      "description": "Queen sac on g8 deflects the rook; the knight delivers smothered mate.",
+      "nodes": ["discovered-attack"]
+    },
+    {
+      "external_id": "kw-kr-drive-edge",
+      "fen": "8/8/4k3/8/8/8/3K4/4R3 w - - 0 1",
+      "solution_uci": ["e1e5", "e6f6", "d2d3"],
+      "themes": ["kr-vs-k", "technique", "multi-step"],
+      "rating": 1400,
+      "source": "knightwise",
+      "description": "Cut the king off with the rook, then march your own king up.",
+      "nodes": ["kr-vs-k-technique"]
+    },
+    {
+      "external_id": "kw-greek-gift-mini",
+      "fen": "r1bqk2r/pppp1ppp/2n2n2/4p3/1bB1P3/2NP1N2/PPP2PPP/R1BQK2R w KQkq - 0 1",
+      "solution_uci": ["c4f7", "e8f7", "f3g5"],
+      "themes": ["greek-gift", "discovered-attack", "fork", "multi-step"],
+      "rating": 1700,
+      "source": "knightwise",
+      "description": "Sac on f7 cracks the king; the knight comes in winning material.",
+      "nodes": ["discovered-attack"]
+    },
+    {
+      "external_id": "kw-passed-pawn-race",
+      "fen": "8/1p6/8/8/8/8/1P3k2/3K4 w - - 0 1",
+      "solution_uci": ["b2b4", "f2f3", "b4b5"],
+      "themes": ["passed-pawn", "kp-race", "technique", "multi-step"],
+      "rating": 1500,
+      "source": "knightwise",
+      "description": "Push the passer twice — the b-pawn outruns the king.",
+      "nodes": ["passed-pawn-technique"]
+    },
+    {
+      "external_id": "kw-discovered-fork",
+      "fen": "r1bq1rk1/ppp2ppp/2n2n2/3p4/3P4/2N2N2/PPP1QPPP/R1B2RK1 b - - 0 1",
+      "solution_uci": ["f6e4", "c3e4", "d5e4"],
+      "themes": ["centralization", "discovered-attack", "multi-step"],
+      "rating": 1200,
+      "source": "knightwise",
+      "description": "Centralize the knight, force the trade, recapture with the d-pawn.",
+      "nodes": ["discovered-attack"]
     }
   ]
 }
