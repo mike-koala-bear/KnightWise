@@ -10,6 +10,7 @@ from .routers import (
     ingest,
     llm,
     nodes,
+    onboarding,
     progress,
     rating,
     sync,
@@ -45,6 +46,7 @@ def create_app() -> FastAPI:
     app.include_router(sync.router, prefix="/v1")
     app.include_router(llm.router, prefix="/v1")
     app.include_router(engine.router, prefix="/v1")
+    app.include_router(onboarding.router, prefix="/v1")
     return app
 
 

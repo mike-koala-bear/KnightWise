@@ -18,4 +18,5 @@ class User(Base):
     # Glicko-2 rating estimate (after onboarding)
     rating_mu: Mapped[float | None] = mapped_column(nullable=True)
     rating_sigma: Mapped[float | None] = mapped_column(nullable=True)
+    onboarding_completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

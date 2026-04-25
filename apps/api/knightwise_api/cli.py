@@ -21,6 +21,7 @@ from .engine.analysis import StockfishUnavailableError
 from .engine.pipeline import analyze_and_store
 from .ingest import fetch_chesscom_games, fetch_lichess_games, ingest_games
 from .models import Game
+from .onboarding.seed import seed_onboarding_puzzles
 
 
 def cmd_ingest(args: argparse.Namespace) -> int:
@@ -95,6 +96,13 @@ def cmd_seed_nodes(_: argparse.Namespace) -> int:
         f"edges {report.edges_inserted}+  "
         f"node_puzzle_links {report.node_puzzle_links_inserted}+"
     )
+    return 0
+
+
+def cmd_seed_onboarding(_: argparse.Namespace) -> int:
+    with SessionLocal() as db:
+        report = seed_onboarding_puzzles(db)
+    print(f"seed-onboarding: inserted={report.inserted} updated={report.updated}")
     return 0
 
 
@@ -179,6 +187,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_seed = sub.add_parser("seed-nodes", help="Seed authored lesson nodes + puzzles")
     p_seed.set_defaults(func=cmd_seed_nodes)
+
+    p_seed_onb = sub.add_parser(
+        "seed-onboarding",
+        help="Seed the calibrated tactics puzzles used by the onboarding skill test",
+    )
+    p_seed_onb.set_defaults(func=cmd_seed_onboarding)
 
     p_maia = sub.add_parser(
         "maia-check",

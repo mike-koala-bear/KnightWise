@@ -1,0 +1,140 @@
+{
+  "$description": "Calibrated tactics puzzles for the onboarding skill test. Puzzle ratings span ~800-2200 Elo. Solutions are single-best-move; alternatives that lose to better refutations are NOT included on purpose so the Glicko update gets a clean signal. Curated, not auto-generated. Verify each via tools/verify_onboarding_puzzles.py.",
+  "puzzles": [
+    {
+      "external_id": "kw-onb-001",
+      "fen": "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1",
+      "solution_uci": ["a1a8"],
+      "themes": ["onboarding", "mateIn1", "backRankMate"],
+      "rating": 800,
+      "source": "knightwise",
+      "description": "Back-rank mate: White rook to the 8th."
+    },
+    {
+      "external_id": "kw-onb-002",
+      "fen": "7k/Q7/6K1/8/8/8/8/8 w - - 0 1",
+      "solution_uci": ["a7h7"],
+      "themes": ["onboarding", "mateIn1", "queenMate"],
+      "rating": 900,
+      "source": "knightwise",
+      "description": "K+Q vs lone king. One move mate."
+    },
+    {
+      "external_id": "kw-onb-003",
+      "fen": "5rk1/5ppp/8/8/8/8/r4PPP/4R1K1 w - - 0 1",
+      "solution_uci": ["e1e8"],
+      "themes": ["onboarding", "mateIn1", "backRankMate"],
+      "rating": 1000,
+      "source": "knightwise",
+      "description": "White rook to the 8th — Black's f8 rook is pinned by nothing useful, but the king has no luft."
+    },
+    {
+      "external_id": "kw-onb-004",
+      "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 1",
+      "solution_uci": ["c4f7"],
+      "themes": ["onboarding", "fork", "kingAttack"],
+      "rating": 1100,
+      "source": "knightwise",
+      "description": "Italian Game move-order trap: bishop captures on f7 with check, winning the rook after the king takes (or losing the queen if it doesn't)."
+    },
+    {
+      "external_id": "kw-onb-005",
+      "fen": "r3k2r/ppp2ppp/2n1bn2/3qp3/8/2NP1N2/PPP2PPP/R1BQ1RK1 w kq - 0 1",
+      "solution_uci": ["c3d5"],
+      "themes": ["onboarding", "discoveredAttack"],
+      "rating": 1300,
+      "source": "knightwise",
+      "description": "Knight wins the queen by simple capture; nothing recaptures cleanly."
+    },
+    {
+      "external_id": "kw-onb-006",
+      "fen": "r4rk1/pp3ppp/2p5/3q4/3P4/2N5/PPP2PPP/3QR1K1 w - - 0 1",
+      "solution_uci": ["c3e4"],
+      "themes": ["onboarding", "fork"],
+      "rating": 1400,
+      "source": "knightwise",
+      "description": "Knight to e4 forks the queen (d5) — only legal way to keep her is to retreat to a square where she still loses."
+    },
+    {
+      "external_id": "kw-onb-007",
+      "fen": "r1bqk2r/pppp1ppp/2n2n2/2b1p1N1/2B1P3/8/PPPP1PPP/RNBQK2R w KQkq - 0 1",
+      "solution_uci": ["g5f7"],
+      "themes": ["onboarding", "fork", "fried-liver"],
+      "rating": 1500,
+      "source": "knightwise",
+      "description": "Fried Liver: knight to f7 forks queen and rook (and the king if Black blunders Kxf7)."
+    },
+    {
+      "external_id": "kw-onb-008",
+      "fen": "r4rk1/pp3ppp/2pq4/8/3P4/2N5/PPP2PPP/3QR1K1 b - - 0 1",
+      "solution_uci": ["d6h2"],
+      "themes": ["onboarding", "kingAttack"],
+      "rating": 1600,
+      "source": "knightwise",
+      "description": "Black queen sacrifices on h2: K must take, then Black plays a winning continuation. (For onboarding we score the first move only.)"
+    },
+    {
+      "external_id": "kw-onb-009",
+      "fen": "6k1/5ppp/8/8/8/8/r4PPP/3R2K1 w - - 0 1",
+      "solution_uci": ["d1d8"],
+      "themes": ["onboarding", "mateIn1", "backRankMate"],
+      "rating": 1700,
+      "source": "knightwise",
+      "description": "Back-rank mate with the d-rook; Black's a2 rook can't intervene."
+    },
+    {
+      "external_id": "kw-onb-010",
+      "fen": "r1bq1rk1/ppp2ppp/2np1n2/2b1p3/2B1P3/2NP1N2/PPP2PPP/R1BQ1RK1 w - - 0 1",
+      "solution_uci": ["c4f7"],
+      "themes": ["onboarding", "kingAttack"],
+      "rating": 1800,
+      "source": "knightwise",
+      "description": "Bxf7+! sacrifices the bishop to drag the king out and exploit the open f-file."
+    },
+    {
+      "external_id": "kw-onb-011",
+      "fen": "5rk1/5p1p/6p1/8/8/8/5PPP/3R2K1 w - - 0 1",
+      "solution_uci": ["d1d8"],
+      "themes": ["onboarding", "endgame", "rookEndgame"],
+      "rating": 1500,
+      "source": "knightwise",
+      "description": "Trade rooks into a winning K+P endgame; the only way to convert without trickery."
+    },
+    {
+      "external_id": "kw-onb-012",
+      "fen": "r1bqk2r/ppp2ppp/2n2n2/3pp3/1bB1P3/2NP1N2/PPP2PPP/R1BQK2R w KQkq - 0 1",
+      "solution_uci": ["e4d5"],
+      "themes": ["onboarding", "centralPawn"],
+      "rating": 1300,
+      "source": "knightwise",
+      "description": "Capture in the centre — wins a pawn cleanly because the recapture loses the d-pawn anyway."
+    },
+    {
+      "external_id": "kw-onb-013",
+      "fen": "8/8/8/8/8/3k4/8/3K1R2 w - - 0 1",
+      "solution_uci": ["f1f3"],
+      "themes": ["onboarding", "endgame", "rookEndgame"],
+      "rating": 1100,
+      "source": "knightwise",
+      "description": "K+R vs K: cut the enemy king with a rook check on the 3rd rank — the textbook first move."
+    },
+    {
+      "external_id": "kw-onb-014",
+      "fen": "8/8/8/4k3/8/8/4P3/4K3 w - - 0 1",
+      "solution_uci": ["e1d2"],
+      "themes": ["onboarding", "endgame", "kingAndPawn"],
+      "rating": 2000,
+      "source": "knightwise",
+      "description": "K+P vs K with the pawn behind the king: win the opposition by stepping aside; only this king move keeps the pawn."
+    },
+    {
+      "external_id": "kw-onb-015",
+      "fen": "r4rk1/pp3ppp/2p2n2/q3p3/8/2N5/PPPQ1PPP/3R1RK1 w - - 0 1",
+      "solution_uci": ["c3b5"],
+      "themes": ["onboarding", "fork", "queenTrap"],
+      "rating": 2200,
+      "source": "knightwise",
+      "description": "Knight sortie to b5 — the queen has no safe retreat that isn't a trade."
+    }
+  ]
+}

@@ -341,7 +341,7 @@ requires-dist = [
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.24.0,<0.25" },
     { name = "python-chess", specifier = ">=1.999" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.7.0,<0.8" },
-    { name = "simple-maia3-inference", marker = "extra == 'maia3'", git = "https://github.com/mcognetta/simple-maia3-inference?rev=main" },
+    { name = "simple-maia3-inference", marker = "extra == 'maia3'", git = "https://github.com/mcognetta/simple-maia3-inference?rev=01df70b33642d427f42a3308c60e923cce7567b0" },
     { name = "sqlalchemy", specifier = ">=2.0.35,<3" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.32.0,<0.33" },
 ]
@@ -780,7 +780,7 @@ wheels = [
 [[package]]
 name = "simple-maia3-inference"
 version = "0.1.0"
-source = { git = "https://github.com/mcognetta/simple-maia3-inference?rev=main#01df70b33642d427f42a3308c60e923cce7567b0" }
+source = { git = "https://github.com/mcognetta/simple-maia3-inference?rev=01df70b33642d427f42a3308c60e923cce7567b0#01df70b33642d427f42a3308c60e923cce7567b0" }
 dependencies = [
     { name = "chess" },
     { name = "numpy" },
