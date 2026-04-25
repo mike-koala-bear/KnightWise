@@ -67,9 +67,7 @@ def is_session_complete(
 ) -> bool:
     if attempts_so_far >= MAX_ATTEMPTS:
         return True
-    if attempts_so_far >= MIN_ATTEMPTS and estimate.sigma <= GLICKO_CONVERGED_SIGMA:
-        return True
-    return False
+    return attempts_so_far >= MIN_ATTEMPTS and estimate.sigma <= GLICKO_CONVERGED_SIGMA
 
 
 __all__ = [
