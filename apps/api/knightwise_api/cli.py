@@ -98,6 +98,46 @@ def cmd_seed_nodes(_: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_maia_check(args: argparse.Namespace) -> int:
+    """Smoke-test the Maia-3 ONNX install.
+
+    Prints the active adapter, runs a single inference on the supplied FEN at
+    the supplied rating, and reports the top-3 predicted moves. Useful for
+    confirming ``--extra maia3`` is wired correctly without spinning up the
+    full API.
+    """
+    from .engine.maia import Maia3Adapter, Maia3Unavailable, _get_session, adapter_name, get_maia
+
+    adapter = get_maia()
+    name = adapter_name(adapter)
+    print(f"active adapter: {name}")
+
+    if name != "maia3":
+        print("Maia-3 is not active. To enable:")
+        print("  uv sync --extra maia3")
+        print("  KNIGHTWISE_MAIA_ADAPTER=auto knightwise maia-check")
+        return 1
+
+    fen = cast(str, args.fen)
+    rating = int(args.rating)
+    try:
+        session = _get_session()
+    except Maia3Unavailable as exc:
+        print(f"Maia-3 unavailable: {exc}", file=sys.stderr)
+        return 1
+    move_probs, ldw = session.probs(fen=fen, elo_self=float(rating), elo_oppo=float(rating))
+    print(f"FEN: {fen}")
+    print(f"rating: {rating} (self vs self)")
+    print(f"LDW (loss/draw/win, side to move): {ldw[0]:.3f} / {ldw[1]:.3f} / {ldw[2]:.3f}")
+    print("top 3 moves:")
+    for uci, prob in list(move_probs.items())[:3]:
+        print(f"  {uci}  {prob * 100:5.1f}%")
+    # Also exercise the adapter so we cover the full call path users hit.
+    pred = Maia3Adapter(model=session).predict(fen, rating)
+    print(f"adapter top: {pred.move_uci} ({pred.prob * 100:.1f}%)")
+    return 0
+
+
 def cmd_games(_: argparse.Namespace) -> int:
     with SessionLocal() as db:
         rows = db.execute(
@@ -139,6 +179,18 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_seed = sub.add_parser("seed-nodes", help="Seed authored lesson nodes + puzzles")
     p_seed.set_defaults(func=cmd_seed_nodes)
+
+    p_maia = sub.add_parser(
+        "maia-check",
+        help="Smoke-test the optional Maia-3 ONNX install (requires --extra maia3)",
+    )
+    p_maia.add_argument(
+        "--fen",
+        default="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+        help="FEN to evaluate (default: starting position)",
+    )
+    p_maia.add_argument("--rating", type=int, default=1500)
+    p_maia.set_defaults(func=cmd_maia_check)
 
     return p
 
