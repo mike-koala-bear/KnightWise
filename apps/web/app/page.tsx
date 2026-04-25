@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { CoachStatusBadge } from '@/components/CoachStatusBadge';
 import { DailyProgress } from '@/components/DailyProgress';
+import { OnboardingBanner } from '@/components/OnboardingBanner';
 import { RatingTracker } from '@/components/RatingTracker';
 import { StreakBadge } from '@/components/StreakBadge';
 import { SyncButton } from '@/components/SyncButton';
@@ -24,6 +25,8 @@ export default function Home() {
           <CoachStatusBadge />
         </div>
       </header>
+
+      <OnboardingBanner userId={1} />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <RatingTracker userId={1} days={7} />

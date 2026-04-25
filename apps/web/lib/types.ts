@@ -111,6 +111,37 @@ export type LLMHealth = {
   reason: string;
 };
 
+export type OnboardingState = {
+  user_id: number;
+  rating_mu: number;
+  rating_sigma: number;
+  attempts_so_far: number;
+  completed_at: string | null;
+  min_attempts: number;
+  max_attempts: number;
+};
+
+export type OnboardingPuzzleOut = {
+  id: number;
+  external_id: string | null;
+  fen: string;
+  rating: number;
+  description: string | null;
+};
+
+export type OnboardingNextOut = {
+  done: boolean;
+  puzzle: OnboardingPuzzleOut | null;
+  state: OnboardingState;
+};
+
+export type OnboardingAttemptOut = {
+  correct: boolean;
+  expected_uci: string;
+  state: OnboardingState;
+  done: boolean;
+};
+
 export type GalaxyNode = {
   id: number;
   slug: string;
