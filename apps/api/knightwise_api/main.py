@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .routers import (
     analyze,
     drills,
+    engine,
     games,
     health,
     ingest,
@@ -43,6 +44,7 @@ def create_app() -> FastAPI:
     app.include_router(progress.router, prefix="/v1")
     app.include_router(sync.router, prefix="/v1")
     app.include_router(llm.router, prefix="/v1")
+    app.include_router(engine.router, prefix="/v1")
     return app
 
 
