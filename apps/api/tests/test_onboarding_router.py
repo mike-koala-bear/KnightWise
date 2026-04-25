@@ -186,6 +186,37 @@ def test_attempt_after_finish_409(client, db_session):
     assert r.status_code == 409
 
 
+def test_attempt_rejects_non_onboarding_puzzle(client, db_session):
+    """Only puzzles tagged 'onboarding' may be submitted to /attempt."""
+    seed_onboarding_puzzles(db_session)
+    user_id = _create_user(db_session)
+    client.post(f"/v1/onboarding/start?user_id={user_id}")
+
+    # Inject a non-onboarding puzzle directly into the DB.
+    from knightwise_api.models import Puzzle as PuzzleModel
+    drill = PuzzleModel(
+        external_id="kw-drill-injected",
+        fen="6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1",
+        solution_uci=["a1a8"],
+        themes=["back-rank"],
+        rating=2400,
+        description="not onboarding",
+    )
+    db_session.add(drill)
+    db_session.commit()
+
+    r = client.post(
+        "/v1/onboarding/attempt",
+        json={
+            "user_id": user_id,
+            "puzzle_id": drill.id,
+            "move_uci": "a1a8",
+            "time_ms": 1,
+        },
+    )
+    assert r.status_code == 422
+
+
 def test_attempt_rejects_duplicate_puzzle(client, db_session):
     """A client cannot rig their rating by re-attempting the same puzzle."""
     seed_onboarding_puzzles(db_session)

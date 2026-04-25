@@ -212,6 +212,14 @@ def onboarding_attempt(req: AttemptIn, db: DBSession) -> AttemptOut:
     puzzle = db.execute(select(Puzzle).where(Puzzle.id == req.puzzle_id)).scalar_one_or_none()
     if puzzle is None:
         raise HTTPException(status_code=404, detail=f"puzzle not found: {req.puzzle_id}")
+    # Only puzzles tagged with ONBOARDING_THEME can be used for calibration —
+    # otherwise a client could submit drill/training puzzles with known
+    # solutions and skew the Glicko estimate.
+    if not puzzle.themes or ONBOARDING_THEME not in puzzle.themes:
+        raise HTTPException(
+            status_code=422,
+            detail=f"puzzle {req.puzzle_id} is not an onboarding puzzle",
+        )
     expected = (puzzle.solution_uci or [""])[0]
     if not expected:
         raise HTTPException(status_code=500, detail="puzzle has no solution")
