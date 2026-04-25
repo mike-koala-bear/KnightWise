@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -116,7 +116,7 @@ def _select_drill_puzzle_ids(
     if not puzzle_ids_in_node:
         return []
 
-    now = datetime.utcnow()
+    now = datetime.now(UTC).replace(tzinfo=None)
     due_rows = db.execute(
         select(SrsCard.puzzle_id, SrsCard.due_at)
         .where(
@@ -190,7 +190,9 @@ class DailyWarp:
     drill_puzzle_ids: list[int]
     coach_note: str
     games_analyzed: int
-    generated_at: datetime = field(default_factory=datetime.utcnow)
+    generated_at: datetime = field(
+        default_factory=lambda: datetime.now(UTC).replace(tzinfo=None)
+    )
 
 
 def compose_daily_warp(

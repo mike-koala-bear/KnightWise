@@ -13,7 +13,7 @@ in the last 7 days?", not to replace a ratings engine.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -64,7 +64,7 @@ def build_rating_history(
     if days < 1:
         raise ValueError("days must be >= 1")
 
-    end_day = today or datetime.utcnow().date()
+    end_day = today or datetime.now(UTC).date()
     start_day = end_day - timedelta(days=days - 1)
 
     rows = db.execute(

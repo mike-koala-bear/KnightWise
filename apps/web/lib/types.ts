@@ -68,6 +68,49 @@ export type RatingHistoryOut = {
   delta: number | null;
 };
 
+export type DailyProgressOut = {
+  date: string;
+  solved: number;
+  attempts: number;
+  target: number;
+  complete: boolean;
+};
+
+export type StreakOut = {
+  current: number;
+  longest: number;
+  last_active: string | null;
+};
+
+export type SyncStartedResponse = {
+  job_id: string;
+  status: 'pending' | 'running' | 'done' | 'error';
+};
+
+export type SyncStatusResponse = {
+  job_id: string;
+  status: 'pending' | 'running' | 'done' | 'error';
+  message: string;
+  lichess_fetched: number;
+  lichess_inserted: number;
+  chesscom_fetched: number;
+  chesscom_inserted: number;
+  games_analyzed: number;
+  games_failed: number;
+  total_games_to_analyze: number;
+  total_fetched: number;
+  total_inserted: number;
+  error: string | null;
+  started_at: string;
+  finished_at: string | null;
+};
+
+export type LLMHealth = {
+  model: string;
+  live: boolean;
+  reason: string;
+};
+
 export type GalaxyNode = {
   id: number;
   slug: string;
