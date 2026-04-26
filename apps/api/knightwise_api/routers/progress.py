@@ -28,10 +28,17 @@ class StreakOut(BaseModel):
     last_active: str | None
 
 
-def _require_user(db: Session, user_id: int) -> None:
+def _get_or_create_user(db: Session, user_id: int) -> int:
     exists = db.execute(select(User.id).where(User.id == user_id)).scalar_one_or_none()
     if exists is None:
+        if user_id == 1:
+            user = User()
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+            return int(user.id)
         raise HTTPException(status_code=404, detail=f"user not found: {user_id}")
+    return int(exists)
 
 
 @router.get("/progress/today", response_model=DailyProgressOut)
@@ -40,8 +47,8 @@ def progress_today(
     user_id: int = Query(..., ge=1),
     target: int = Query(DEFAULT_DAILY_TARGET, ge=1, le=100),
 ) -> DailyProgressOut:
-    _require_user(db, user_id)
-    p = drills_solved_today(db, user_id=user_id, target=target)
+    uid = _get_or_create_user(db, user_id)
+    p = drills_solved_today(db, user_id=uid, target=target)
     return DailyProgressOut(
         date=p.date.isoformat(),
         solved=p.solved,
@@ -56,8 +63,8 @@ def streak(
     db: DBSession,
     user_id: int = Query(..., ge=1),
 ) -> StreakOut:
-    _require_user(db, user_id)
-    s = streak_stats(db, user_id=user_id)
+    uid = _get_or_create_user(db, user_id)
+    s = streak_stats(db, user_id=uid)
     return StreakOut(
         current=s.current,
         longest=s.longest,

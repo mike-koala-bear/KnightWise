@@ -21,12 +21,11 @@ export function SyncButton({ userId = 1, maxGames = 10, depth = 14, onComplete }
   const pollRef = useRef<number | null>(null);
 
   useEffect(() => {
-    return () => {
-      if (pollRef.current) window.clearInterval(pollRef.current);
-    };
+    return () => { if (pollRef.current) window.clearInterval(pollRef.current); };
   }, []);
 
   const running = status?.status === 'running' || status?.status === 'pending' || starting;
+  const done = status?.status === 'done';
 
   async function start() {
     setError(null);
@@ -67,71 +66,65 @@ export function SyncButton({ userId = 1, maxGames = 10, depth = 14, onComplete }
     pollRef.current = window.setInterval(tick, POLL_INTERVAL_MS);
   }
 
-  const label = starting
-    ? 'Starting…'
-    : status?.status === 'running' || status?.status === 'pending'
-      ? 'Syncing…'
-      : status?.status === 'done'
-        ? 'Re-sync my games'
-        : 'Sync my games';
-
   return (
-    <div className="rounded-lg border border-white/10 bg-white/5 p-4" data-testid="sync-button">
+    <div
+      className={`rounded-2xl border p-4 ${done ? 'border-kw-green/30 bg-kw-green/5' : 'border-kw-border bg-kw-surface'}`}
+      data-testid="sync-button"
+    >
       <div className="flex items-center justify-between gap-3">
-        <div>
-          <div className="text-xs uppercase tracking-wider text-slate-400">Game data</div>
-          <div className="mt-0.5 text-sm font-medium">Pull your latest Lichess + Chess.com games</div>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-kw-blue/20 text-xl">
+            {running ? '⏳' : done ? '✅' : '🔄'}
+          </div>
+          <div>
+            <div className="text-sm font-bold text-white">
+              {done ? 'Games synced' : 'Sync your games'}
+            </div>
+            <div className="text-xs text-slate-400">
+              Pull from Lichess + Chess.com
+            </div>
+          </div>
         </div>
         <button
           type="button"
           onClick={start}
           disabled={running}
-          className="rounded-md bg-indigo-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
+          className={`rounded-xl px-3 py-2 text-xs font-bold transition ${
+            running
+              ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+              : 'bg-kw-blue text-white hover:brightness-110'
+          }`}
           data-testid="sync-button-cta"
         >
-          {label}
+          {starting ? 'Starting…' : running ? 'Syncing…' : done ? 'Re-sync' : 'Sync'}
         </button>
       </div>
 
       {error && (
-        <div className="mt-3 rounded border border-rose-500/40 bg-rose-500/5 px-3 py-2 text-xs text-rose-200">
+        <div className="mt-3 rounded-xl border border-kw-red/30 bg-kw-red/10 px-3 py-2 text-xs text-red-300">
           {error}
         </div>
       )}
 
       {status && (
-        <div
-          className="mt-3 space-y-1 text-xs text-slate-300"
-          data-testid="sync-status"
-          data-status={status.status}
-        >
-          <div className="flex justify-between text-slate-400">
+        <div className="mt-3 space-y-1 text-xs text-slate-400" data-testid="sync-status" data-status={status.status}>
+          <div className="flex justify-between">
             <span>{status.message}</span>
-            <span className="tabular-nums">
-              {status.status === 'done' ? 'done' : status.status}
-            </span>
+            <span className="tabular-nums font-medium">{status.status}</span>
           </div>
           <div className="flex justify-between tabular-nums">
-            <span>
-              Lichess: {status.lichess_inserted} new / {status.lichess_fetched} fetched
-            </span>
-            <span>
-              Chess.com: {status.chesscom_inserted} new / {status.chesscom_fetched} fetched
-            </span>
+            <span>Lichess: {status.lichess_inserted} new</span>
+            <span>Chess.com: {status.chesscom_inserted} new</span>
           </div>
           {status.total_games_to_analyze > 0 && (
             <div className="flex justify-between tabular-nums">
-              <span>
-                Analyzing: {status.games_analyzed} / {status.total_games_to_analyze}
-              </span>
+              <span>Analyzing: {status.games_analyzed}/{status.total_games_to_analyze}</span>
               {status.games_failed > 0 && (
-                <span className="text-amber-300">{status.games_failed} failed</span>
+                <span className="text-amber-400">{status.games_failed} failed</span>
               )}
             </div>
           )}
-          {status.error && (
-            <div className="text-rose-300">{status.error}</div>
-          )}
+          {status.error && <div className="text-kw-red">{status.error}</div>}
         </div>
       )}
     </div>

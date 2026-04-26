@@ -16,10 +16,11 @@ type Status = 'idle' | 'loading' | 'playing' | 'solved' | 'wrong' | 'empty' | 'e
 export function DrillRunner({ nodeSlug }: Props) {
   const [drill, setDrill] = useState<NextDrillOut | null>(null);
   const [status, setStatus] = useState<Status>('loading');
-  const [message, setMessage] = useState<string>('Loading drill…');
+  const [message, setMessage] = useState<string>('');
   const [currentFen, setCurrentFen] = useState<string>('');
   const [startedAt, setStartedAt] = useState<number>(0);
   const [solutionIndex, setSolutionIndex] = useState(0);
+  const [streak, setStreak] = useState(0);
 
   const game = useMemo(() => new Chess(), []);
 
@@ -30,14 +31,12 @@ export function DrillRunner({ nodeSlug }: Props) {
 
   async function loadNext() {
     setStatus('loading');
-    setMessage('Loading drill…');
     try {
       const qs = nodeSlug ? `?node_slug=${encodeURIComponent(nodeSlug)}` : '';
       const next = await apiGet<NextDrillOut>(`/v1/drills/next${qs}`);
       setDrill(next);
       if (!next.puzzle) {
         setStatus('empty');
-        setMessage('No drills available. Run `cli seed-nodes` first.');
         return;
       }
       game.load(next.puzzle.fen);
@@ -45,14 +44,14 @@ export function DrillRunner({ nodeSlug }: Props) {
       setSolutionIndex(0);
       setStartedAt(Date.now());
       setStatus('playing');
-      setMessage(next.puzzle.description ?? 'Your move.');
+      setMessage(next.puzzle.description ?? 'Find the best move.');
     } catch (e) {
       setStatus('error');
       setMessage(e instanceof Error ? e.message : 'Load failed');
     }
   }
 
-  async function submitAttempt(correct: boolean, timeMs: number, hintsUsed = 0) {
+  async function submitAttempt(correct: boolean, timeMs: number) {
     if (!drill?.puzzle) return;
     try {
       await apiPost<AttemptResponse>('/v1/drills/attempt', {
@@ -60,11 +59,9 @@ export function DrillRunner({ nodeSlug }: Props) {
         puzzle_id: drill.puzzle.id,
         correct,
         time_ms: timeMs,
-        hints_used: hintsUsed,
+        hints_used: 0,
       });
-    } catch {
-      // non-fatal; local UI still works
-    }
+    } catch { /* non-fatal */ }
   }
 
   function onMove(from: string, to: string): boolean {
@@ -73,16 +70,15 @@ export function DrillRunner({ nodeSlug }: Props) {
     const expected = drill.puzzle.solution_uci[solutionIndex];
     if (!expected) return false;
 
-    const [expectedFrom, expectedTo, promo] = [
-      expected.slice(0, 2),
-      expected.slice(2, 4),
-      expected.slice(4) || undefined,
-    ];
+    const expectedFrom = expected.slice(0, 2);
+    const expectedTo = expected.slice(2, 4);
+    const promo = expected.slice(4) || undefined;
 
     if (from !== expectedFrom || to !== expectedTo) {
       setStatus('wrong');
-      setMessage(`Not quite — expected ${expectedFrom}→${expectedTo}. Try the next one.`);
-      submitAttempt(false, Date.now() - startedAt);
+      setMessage(`Not quite — expected ${expectedFrom}→${expectedTo}`);
+      setStreak(0);
+      void submitAttempt(false, Date.now() - startedAt);
       return false;
     }
 
@@ -94,9 +90,6 @@ export function DrillRunner({ nodeSlug }: Props) {
       return false;
     }
 
-    // Standard puzzle convention: solution_uci alternates user / opponent / user.
-    // After the user's correct move, auto-play any consecutive opponent responses
-    // so the user is only ever prompted for their own moves.
     let idx = solutionIndex + 1;
     const solution = drill.puzzle.solution_uci;
     while (idx < solution.length && idx % 2 === 1) {
@@ -110,20 +103,19 @@ export function DrillRunner({ nodeSlug }: Props) {
         const oppPromo = opp.slice(4) || undefined;
         if (oppPromo) oppMove.promotion = oppPromo;
         game.move(oppMove);
-      } catch {
-        break;
-      }
+      } catch { break; }
       idx += 1;
     }
     setCurrentFen(game.fen());
 
     if (idx >= solution.length) {
       setStatus('solved');
-      setMessage('Solved!');
-      submitAttempt(true, Date.now() - startedAt);
+      setMessage('Brilliant! Puzzle solved.');
+      setStreak((s) => s + 1);
+      void submitAttempt(true, Date.now() - startedAt);
     } else {
       setSolutionIndex(idx);
-      setMessage('Right. Keep going…');
+      setMessage('Right move — keep going…');
     }
     return true;
   }
@@ -131,44 +123,98 @@ export function DrillRunner({ nodeSlug }: Props) {
   const orientation = (() => {
     const fen = drill?.puzzle?.fen ?? '';
     if (!fen) return 'white';
-    const parts = fen.split(' ');
-    return parts[1] === 'w' ? 'white' : 'black';
+    return fen.split(' ')[1] === 'w' ? 'white' : 'black';
   })();
 
   return (
-    <section className="w-full max-w-md space-y-4">
+    <div className="mx-auto max-w-lg space-y-4 px-4 py-6">
+      {/* Streak counter */}
+      {streak > 0 && (
+        <div className="flex justify-center">
+          <div className="animate-bounce-in rounded-2xl border border-amber-400/30 bg-amber-500/15 px-4 py-2 text-sm font-bold text-amber-300">
+            🔥 {streak} in a row!
+          </div>
+        </div>
+      )}
+
+      {/* Node context */}
       {drill?.node && (
-        <div className="rounded-lg border border-white/10 bg-slate-900/60 p-4 text-sm">
-          <div className="font-semibold">{drill.node.title}</div>
+        <div className="rounded-2xl border border-kw-purple/30 bg-kw-purple/10 px-4 py-3">
+          <div className="text-xs font-bold uppercase tracking-wider text-kw-purple">
+            {drill.node.domain}
+          </div>
+          <div className="mt-0.5 font-bold text-white">{drill.node.title}</div>
           {drill.node.description && (
-            <p className="mt-1 text-slate-400">{drill.node.description}</p>
+            <p className="mt-1 text-xs text-slate-400">{drill.node.description}</p>
           )}
         </div>
       )}
 
-      {drill?.puzzle && currentFen && (
-        <Board fen={currentFen} orientation={orientation} onMove={onMove} id="drill-board" />
+      {/* Prompt */}
+      {status === 'playing' && (
+        <div className="rounded-2xl border border-kw-border bg-kw-surface px-4 py-3 text-center">
+          <p className="font-semibold text-white">{message}</p>
+          <p className="mt-1 text-xs text-slate-500">
+            {orientation === 'white' ? 'White' : 'Black'} to move
+            {drill?.puzzle && (
+              <span className="ml-2 text-slate-600">· rating {drill.puzzle.rating}</span>
+            )}
+          </p>
+        </div>
       )}
 
-      <div className="rounded-lg border border-white/10 bg-slate-900/40 p-3 text-sm">
-        <div>{message}</div>
-        {drill?.puzzle && (
-          <div className="mt-1 text-xs text-slate-500">
-            puzzle #{drill.puzzle.id} · rating {drill.puzzle.rating}
-            {drill.puzzle.themes.length > 0 && ` · ${drill.puzzle.themes.join(', ')}`}
-          </div>
-        )}
-      </div>
+      {/* Board */}
+      {drill?.puzzle && currentFen && status !== 'empty' && (
+        <div className="overflow-hidden rounded-2xl shadow-xl">
+          <Board fen={currentFen} orientation={orientation} onMove={onMove} id="drill-board" />
+        </div>
+      )}
 
-      {(status === 'solved' || status === 'wrong' || status === 'empty' || status === 'error') && (
-        <button
-          type="button"
-          onClick={loadNext}
-          className="w-full rounded-md bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-400"
+      {/* Feedback */}
+      {(status === 'solved' || status === 'wrong') && (
+        <div
+          className={`animate-slide-up rounded-2xl border p-4 ${
+            status === 'solved'
+              ? 'border-kw-green/40 bg-kw-green/10'
+              : 'border-kw-red/40 bg-kw-red/10'
+          }`}
         >
-          Next drill
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">{status === 'solved' ? '🎉' : '💡'}</span>
+            <div>
+              <div className={`font-bold ${status === 'solved' ? 'text-kw-green' : 'text-kw-red'}`}>
+                {status === 'solved' ? 'Correct!' : 'Wrong move'}
+              </div>
+              <div className="text-sm text-slate-300">{message}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Empty state */}
+      {status === 'empty' && (
+        <div className="rounded-2xl border border-kw-border bg-kw-surface p-8 text-center">
+          <div className="text-4xl mb-3">♟️</div>
+          <div className="font-bold text-white">No drills available yet</div>
+          <p className="mt-2 text-sm text-slate-400">
+            Sync your games first — KnightWise will generate drills from your actual weaknesses.
+          </p>
+        </div>
+      )}
+
+      {/* Error state */}
+      {status === 'error' && (
+        <div className="rounded-2xl border border-kw-red/30 bg-kw-red/10 p-4 text-center text-sm text-slate-300">
+          {message}
+        </div>
+      )}
+
+      {/* Continue button */}
+      {(status === 'solved' || status === 'wrong' || status === 'empty' || status === 'error') && (
+        <button type="button" onClick={loadNext} className="btn-primary w-full">
+          {status === 'solved' ? 'Next puzzle →' : status === 'wrong' ? 'Try another' : 'Retry'}
         </button>
       )}
-    </section>
+    </div>
   );
 }

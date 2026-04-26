@@ -3,13 +3,20 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { OnboardingRunner } from '@/components/OnboardingRunner';
 import { apiPost } from '@/lib/api';
 import type { OnboardingState } from '@/lib/types';
 
-export default function OnboardingPage() {
+type Props = {
+  children: React.ReactNode;
+};
+
+/**
+ * Wraps protected pages. Redirects to /onboarding if the user hasn't
+ * completed the skill test yet. Shows nothing while checking.
+ */
+export function OnboardingGuard({ children }: Props) {
   const router = useRouter();
-  const [checked, setChecked] = useState(false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -20,17 +27,20 @@ export default function OnboardingPage() {
           {},
         );
         if (cancelled) return;
-        if (state.completed_at) {
-          router.replace('/app');
-          return;
+        if (!state.completed_at) {
+          router.replace('/onboarding');
+        } else {
+          setReady(true);
         }
-      } catch { /* API down — let them try */ }
-      if (!cancelled) setChecked(true);
+      } catch {
+        // API unreachable — let the page render rather than blocking forever
+        if (!cancelled) setReady(true);
+      }
     })();
     return () => { cancelled = true; };
   }, [router]);
 
-  if (!checked) {
+  if (!ready) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-kw-green border-t-transparent" />
@@ -38,5 +48,5 @@ export default function OnboardingPage() {
     );
   }
 
-  return <OnboardingRunner userId={1} />;
+  return <>{children}</>;
 }

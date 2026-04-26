@@ -1,82 +1,47 @@
-'use client';
-
+import type { Route } from 'next';
 import Link from 'next/link';
-import { useState } from 'react';
-
-import { CoachStatusBadge } from '@/components/CoachStatusBadge';
-import { DailyProgress } from '@/components/DailyProgress';
-import { OnboardingBanner } from '@/components/OnboardingBanner';
-import { RatingTracker } from '@/components/RatingTracker';
-import { StreakBadge } from '@/components/StreakBadge';
-import { SyncButton } from '@/components/SyncButton';
 
 export default function Home() {
-  const [refreshKey, setRefreshKey] = useState(0);
-
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-8 px-6 py-12">
-      <header className="flex flex-col items-center gap-3 text-center">
-        <h1 className="text-4xl font-bold tracking-tight">KnightWise</h1>
-        <p className="text-sm text-slate-400">
-          Personal chess coach · Stockfish 17.1 · Maia-3 · GPT-4o-mini
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <StreakBadge userId={1} refreshKey={refreshKey} />
-          <CoachStatusBadge />
-        </div>
-      </header>
-
-      <OnboardingBanner userId={1} />
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <RatingTracker userId={1} days={7} />
-        <DailyProgress userId={1} target={8} refreshKey={refreshKey} />
+    <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-lg flex-col items-center justify-center px-6 py-12 text-center">
+      {/* Hero icon */}
+      <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-3xl bg-kw-green/20 text-6xl shadow-lg shadow-kw-green/20">
+        ♞
       </div>
 
-      <SyncButton userId={1} onComplete={() => setRefreshKey((k) => k + 1)} />
+      <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
+        Train like a grandmaster.
+      </h1>
+      <p className="mt-4 text-lg text-slate-400">
+        KnightWise turns your real games into a personalized daily training plan with Stockfish analysis, Maia-3 weakness tagging, and adaptive drills.
+      </p>
 
-      <section className="grid gap-3 sm:grid-cols-3">
-        <Link
-          href={{ pathname: '/warp' }}
-          className="rounded-lg border border-indigo-500/40 bg-indigo-500/10 p-4 transition hover:bg-indigo-500/20"
-        >
-          <div className="text-xs uppercase tracking-wider text-indigo-300">
-            Today
-          </div>
-          <div className="mt-1 text-lg font-semibold">Daily Warp</div>
-          <p className="mt-1 text-xs text-slate-400">
-            15 minutes on your #1 weakness.
-          </p>
-        </Link>
-        <Link
-          href={{ pathname: '/galaxy' }}
-          className="rounded-lg border border-white/10 bg-white/5 p-4 transition hover:bg-white/10"
-        >
-          <div className="text-xs uppercase tracking-wider text-slate-400">
-            Map
-          </div>
-          <div className="mt-1 text-lg font-semibold">Galaxy Path</div>
-          <p className="mt-1 text-xs text-slate-400">
-            Browse the full curriculum and jump to any topic.
-          </p>
-        </Link>
-        <Link
-          href="/drill"
-          className="rounded-lg border border-white/10 bg-white/5 p-4 transition hover:bg-white/10"
-        >
-          <div className="text-xs uppercase tracking-wider text-slate-400">
-            Freeplay
-          </div>
-          <div className="mt-1 text-lg font-semibold">Drill runner</div>
-          <p className="mt-1 text-xs text-slate-400">
-            Solve the next SRS-due puzzle.
-          </p>
-        </Link>
-      </section>
+      {/* Feature pills */}
+      <div className="mt-8 flex flex-wrap justify-center gap-2">
+        {['Daily Lessons', 'Adaptive Drills', 'Game Analysis', 'Streak Tracking'].map((feat) => (
+          <span
+            key={feat}
+            className="rounded-full border border-kw-border bg-kw-surface px-3 py-1 text-sm font-medium text-slate-300"
+          >
+            {feat}
+          </span>
+        ))}
+      </div>
 
-      <footer className="text-center text-xs text-slate-500">
-        Next.js 16 · React 19 · FastAPI 0.115 · Stockfish 17.1 · Maia-3
-      </footer>
-    </main>
+      {/* CTAs */}
+      <div className="mt-10 flex w-full flex-col gap-3">
+        <Link href={'/sign-up' as Route} className="btn-primary w-full text-center">
+          Get started — it&apos;s free
+        </Link>
+        <Link href={'/sign-in' as Route} className="btn-secondary w-full text-center">
+          I already have an account
+        </Link>
+      </div>
+
+      {/* Social proof */}
+      <p className="mt-8 text-xs text-slate-600">
+        Powered by Stockfish 17.1 · Maia-3 · GPT-4o-mini
+      </p>
+    </div>
   );
 }

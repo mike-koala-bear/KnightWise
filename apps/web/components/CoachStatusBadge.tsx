@@ -5,46 +5,33 @@ import { useEffect, useState } from 'react';
 import { apiGet } from '@/lib/api';
 import type { LLMHealth } from '@/lib/types';
 
-/**
- * Tiny pill that surfaces whether coach notes are coming from the live
- * gpt-4o-mini model or the offline stub. We never call the OpenAI API from
- * here — `/v1/llm/health` only inspects local config — so this is cheap and
- * safe to render on every page.
- */
 export function CoachStatusBadge() {
   const [data, setData] = useState<LLMHealth | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     apiGet<LLMHealth>('/v1/llm/health')
-      .then((d) => {
-        if (!cancelled) setData(d);
-      })
-      .catch((e: unknown) => {
-        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
-      });
-    return () => {
-      cancelled = true;
-    };
+      .then((d) => { if (!cancelled) setData(d); })
+      .catch(() => { /* silent */ });
+    return () => { cancelled = true; };
   }, []);
 
-  if (error || !data) return null;
-
-  const live = data.live;
-  const color = live
-    ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-200'
-    : 'border-white/10 bg-white/5 text-slate-400';
-  const label = live ? `AI coach live (${data.model})` : `AI coach: stub (${data.reason})`;
+  if (!data) return null;
 
   return (
     <div
       data-testid="coach-status-badge"
-      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs ${color}`}
-      title={label}
+      className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${
+        data.live
+          ? 'border-kw-green/30 bg-kw-green/10 text-kw-green'
+          : 'border-kw-border bg-kw-surface text-slate-500'
+      }`}
+      title={data.live ? `AI coach: ${data.model}` : `AI coach offline (${data.reason})`}
     >
-      <span aria-hidden="true">{live ? '●' : '○'}</span>
-      <span data-testid="coach-status-label">{label}</span>
+      <span className={`h-1.5 w-1.5 rounded-full ${data.live ? 'bg-kw-green animate-pulse' : 'bg-slate-600'}`} />
+      <span data-testid="coach-status-label">
+        {data.live ? 'AI coach' : 'No AI coach'}
+      </span>
     </div>
   );
 }

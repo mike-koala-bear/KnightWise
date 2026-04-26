@@ -12,57 +12,57 @@ type Props = {
 
 export function StreakBadge({ userId = 1, refreshKey = 0 }: Props) {
   const [data, setData] = useState<StreakOut | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     apiGet<StreakOut>(`/v1/streak?user_id=${userId}`)
-      .then((d) => {
-        if (!cancelled) setData(d);
-      })
-      .catch((e: unknown) => {
-        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
-      });
-    return () => {
-      cancelled = true;
-    };
+      .then((d) => { if (!cancelled) setData(d); })
+      .catch(() => { /* silent – show skeleton */ });
+    return () => { cancelled = true; };
   }, [userId, refreshKey]);
 
-  if (error) return null;
   if (!data) {
     return (
-      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-400">
-        …
+      <div className="flex items-center gap-2 rounded-2xl bg-kw-surface px-4 py-2 animate-pulse">
+        <div className="h-8 w-8 rounded-full bg-slate-700" />
+        <div className="h-4 w-20 rounded bg-slate-700" />
       </div>
     );
   }
 
-  const flame = data.current > 0 ? '🔥' : '•';
-  const color =
-    data.current > 0
-      ? 'border-amber-400/40 bg-amber-500/10 text-amber-200'
-      : 'border-white/10 bg-white/5 text-slate-400';
+  const hasStreak = data.current > 0;
 
   return (
     <div
       data-testid="streak-badge"
-      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs ${color}`}
-      title={
-        data.longest > data.current
-          ? `Current ${data.current}d · longest ${data.longest}d`
-          : undefined
-      }
+      className={`flex items-center gap-3 rounded-2xl px-4 py-2 ${
+        hasStreak
+          ? 'bg-amber-500/15 border border-amber-400/30'
+          : 'bg-kw-surface border border-kw-border'
+      }`}
+      title={data.longest > data.current ? `Best: ${data.longest} days` : undefined}
     >
-      <span aria-hidden="true">{flame}</span>
-      <span>
-        <span data-testid="streak-current" className="font-semibold">
-          {data.current}
-        </span>
-        <span className="ml-1">day streak</span>
+      <span className="text-3xl leading-none" aria-hidden="true">
+        {hasStreak ? '🔥' : '❄️'}
       </span>
-      {data.longest > data.current && (
-        <span className="ml-1 text-slate-500">· best {data.longest}</span>
-      )}
+      <div>
+        <div className="flex items-baseline gap-1">
+          <span
+            data-testid="streak-current"
+            className={`text-xl font-extrabold ${hasStreak ? 'text-amber-300' : 'text-slate-400'}`}
+          >
+            {data.current}
+          </span>
+          <span className={`text-sm font-semibold ${hasStreak ? 'text-amber-400/80' : 'text-slate-500'}`}>
+            day streak
+          </span>
+        </div>
+        {data.longest > 0 && (
+          <div className="text-[10px] text-slate-500">
+            Best: {data.longest} days
+          </div>
+        )}
+      </div>
     </div>
   );
 }

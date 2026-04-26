@@ -11,6 +11,7 @@ dist/
 __pycache__/
 *.py[cod]
 .venv/
+.tools/
 .pytest_cache/
 .ruff_cache/
 *.egg-info/
@@ -36,3 +37,4 @@ __pycache__/
 # Misc
 coverage/
 .cache/
+.pnpm-store/

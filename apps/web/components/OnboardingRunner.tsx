@@ -13,6 +13,7 @@ import type {
 } from '@/lib/types';
 
 type Status = 'loading' | 'playing' | 'feedback' | 'done' | 'error';
+type FeedbackKind = 'correct' | 'wrong' | null;
 
 type Props = {
   userId: number;
@@ -22,23 +23,22 @@ export function OnboardingRunner({ userId }: Props) {
   const router = useRouter();
   const [next, setNext] = useState<OnboardingNextOut | null>(null);
   const [status, setStatus] = useState<Status>('loading');
-  const [message, setMessage] = useState<string>('Loading skill test…');
+  const [message, setMessage] = useState<string>('');
   const [lastAttempt, setLastAttempt] = useState<OnboardingAttemptOut | null>(null);
   const [startedAt, setStartedAt] = useState<number>(0);
+  const [feedback, setFeedback] = useState<FeedbackKind>(null);
 
   const game = useMemo(() => new Chess(), []);
 
   const loadNext = useCallback(async () => {
     setStatus('loading');
     setLastAttempt(null);
+    setFeedback(null);
     try {
-      const r = await apiGet<OnboardingNextOut>(
-        `/v1/onboarding/next?user_id=${userId}`,
-      );
+      const r = await apiGet<OnboardingNextOut>(`/v1/onboarding/next?user_id=${userId}`);
       setNext(r);
       if (r.done || !r.puzzle) {
         setStatus('done');
-        setMessage('Skill test complete.');
         return;
       }
       game.load(r.puzzle.fen);
@@ -54,10 +54,7 @@ export function OnboardingRunner({ userId }: Props) {
   useEffect(() => {
     (async () => {
       try {
-        await apiPost<OnboardingState>(
-          `/v1/onboarding/start?user_id=${userId}`,
-          {},
-        );
+        await apiPost<OnboardingState>(`/v1/onboarding/start?user_id=${userId}`, {});
       } catch (e) {
         setStatus('error');
         setMessage(e instanceof Error ? e.message : 'Failed to start.');
@@ -78,14 +75,9 @@ export function OnboardingRunner({ userId }: Props) {
         time_ms: Date.now() - startedAt,
       });
       setLastAttempt(r);
-      setMessage(
-        r.correct
-          ? 'Correct.'
-          : `Not quite. Expected ${r.expected_uci}.`,
-      );
-      if (r.done) {
-        setStatus('done');
-      }
+      setFeedback(r.correct ? 'correct' : 'wrong');
+      setMessage(r.correct ? 'Excellent!' : `Not quite — expected ${r.expected_uci}`);
+      if (r.done) setStatus('done');
     } catch (e) {
       setStatus('error');
       setMessage(e instanceof Error ? e.message : 'Attempt failed.');
@@ -102,20 +94,15 @@ export function OnboardingRunner({ userId }: Props) {
     } catch {
       return false;
     }
-    const uci = `${from}${to}${promo ?? ''}`;
-    void submit(uci);
+    void submit(`${from}${to}${promo ?? ''}`);
     return true;
   }
 
   async function finish() {
     try {
-      await apiPost<OnboardingState>('/v1/onboarding/finish', {
-        user_id: userId,
-      });
-    } catch {
-      // non-fatal: state is already terminal locally
-    }
-    router.push('/');
+      await apiPost<OnboardingState>('/v1/onboarding/finish', { user_id: userId });
+    } catch { /* non-fatal */ }
+    router.push('/app');
     router.refresh();
   }
 
@@ -125,93 +112,131 @@ export function OnboardingRunner({ userId }: Props) {
     return fen.split(' ')[1] === 'w' ? 'white' : 'black';
   })();
 
-  // lastAttempt holds the post-attempt state; next holds pre-attempt. Prefer post.
   const state: OnboardingState | null = lastAttempt?.state ?? next?.state ?? null;
   const muRounded = state ? Math.round(state.rating_mu) : 1500;
-  const sigmaRounded = state ? Math.round(state.rating_sigma) : 350;
   const attempts = state?.attempts_so_far ?? 0;
   const maxAttempts = state?.max_attempts ?? 12;
+  const progressPct = Math.round((attempts / maxAttempts) * 100);
 
   return (
-    <section className="w-full max-w-md space-y-4">
-      <div className="rounded-lg border border-indigo-500/40 bg-indigo-500/10 p-4 text-sm">
-        <div className="font-semibold">Calibrating your starting Elo</div>
-        <p className="mt-1 text-slate-300">
-          12 adaptive puzzles. We pick each one based on how you did on the last,
-          then estimate your rating with Glicko-1.
-        </p>
-        <div className="mt-2 flex gap-4 text-xs text-slate-400">
-          <span>
-            Estimate <span className="font-mono text-slate-200">{muRounded}</span>{' '}
-            <span className="text-slate-500">±{sigmaRounded}</span>
-          </span>
-          <span>
-            Question{' '}
-            <span className="font-mono text-slate-200">
-              {Math.min(attempts + (status === 'playing' ? 1 : 0), maxAttempts)}
-            </span>{' '}
-            / {maxAttempts}
-          </span>
+    <div className="mx-auto flex max-w-lg flex-col gap-4 px-4 py-6">
+      {/* Header with progress */}
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => router.push('/app')}
+          className="text-slate-400 hover:text-white transition-colors"
+          aria-label="Exit skill test"
+        >
+          ✕
+        </button>
+        <div className="flex-1">
+          <div className="progress-bar">
+            <div
+              className="progress-bar-fill bg-kw-purple"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        </div>
+        <div className="text-xs font-bold text-slate-400 tabular-nums">
+          {Math.min(attempts + (status === 'playing' ? 1 : 0), maxAttempts)}/{maxAttempts}
         </div>
       </div>
 
-      {next?.puzzle && status !== 'done' && (
-        <Board
-          fen={game.fen() || next.puzzle.fen}
-          orientation={orientation}
-          onMove={onMove}
-          id="onboarding-board"
-        />
-      )}
-
-      <div className="rounded-lg border border-white/10 bg-slate-900/40 p-3 text-sm">
-        <div>{message}</div>
-        {next?.puzzle && status === 'playing' && (
-          <div className="mt-1 text-xs text-slate-500">
-            puzzle #{next.puzzle.id} · rating {next.puzzle.rating}
+      {/* Rating estimate pill */}
+      <div className="flex justify-center">
+        <div className="rounded-2xl border border-kw-purple/30 bg-kw-purple/10 px-4 py-2 text-center">
+          <div className="text-xs font-bold uppercase tracking-wider text-kw-purple">
+            Skill Calibration
           </div>
-        )}
+          <div className="mt-0.5 text-sm text-slate-300">
+            Estimated Elo:{' '}
+            <span className="font-extrabold text-white">{muRounded}</span>
+          </div>
+        </div>
       </div>
 
-      {status === 'feedback' && (
-        <button
-          type="button"
-          onClick={loadNext}
-          className="w-full rounded-md bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-400"
+      {/* Puzzle prompt */}
+      {status === 'playing' && (
+        <div className="rounded-2xl border border-kw-border bg-kw-surface px-4 py-3 text-center">
+          <p className="font-semibold text-white">{message}</p>
+          <p className="mt-1 text-xs text-slate-500">
+            {orientation === 'white' ? 'White' : 'Black'} to move
+          </p>
+        </div>
+      )}
+
+      {/* Chess board */}
+      {next?.puzzle && status !== 'done' && status !== 'error' && (
+        <div className="rounded-2xl overflow-hidden shadow-xl">
+          <Board
+            fen={game.fen() || next.puzzle.fen}
+            orientation={orientation}
+            onMove={onMove}
+            id="onboarding-board"
+          />
+        </div>
+      )}
+
+      {/* Feedback panel */}
+      {status === 'feedback' && feedback && (
+        <div
+          className={`animate-slide-up rounded-2xl border p-4 ${
+            feedback === 'correct'
+              ? 'border-kw-green/40 bg-kw-green/10'
+              : 'border-kw-red/40 bg-kw-red/10'
+          }`}
         >
-          Next puzzle
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">{feedback === 'correct' ? '🎉' : '💡'}</span>
+            <div>
+              <div className={`font-bold ${feedback === 'correct' ? 'text-kw-green' : 'text-kw-red'}`}>
+                {feedback === 'correct' ? 'Correct!' : 'Not quite'}
+              </div>
+              <div className="text-sm text-slate-300">{message}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Continue button */}
+      {status === 'feedback' && !lastAttempt?.done && (
+        <button type="button" onClick={loadNext} className="btn-primary w-full">
+          Continue
         </button>
       )}
 
-      {status === 'done' && (
-        <div className="space-y-3">
-          <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-4 text-sm">
-            <div className="font-semibold">Calibration complete.</div>
-            <p className="mt-1 text-slate-300">
-              Starting Elo:{' '}
-              <span className="font-mono text-slate-100">{muRounded}</span>{' '}
-              <span className="text-slate-500">(±{sigmaRounded})</span>
+      {/* Done state */}
+      {(status === 'done' || (status === 'feedback' && lastAttempt?.done)) && (
+        <div className="animate-bounce-in space-y-4">
+          <div className="rounded-2xl border border-kw-green/40 bg-kw-green/10 p-5 text-center">
+            <div className="text-4xl mb-2">🏆</div>
+            <div className="text-lg font-extrabold text-white">Calibration complete!</div>
+            <p className="mt-2 text-slate-300">
+              Your starting Elo:{' '}
+              <span className="font-extrabold text-kw-green text-2xl">{muRounded}</span>
+            </p>
+            <p className="mt-1 text-sm text-slate-400">
+              Every drill will now be tuned to your level.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={finish}
-            className="w-full rounded-md bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-400"
-          >
-            Continue to KnightWise
+          <button type="button" onClick={finish} className="btn-primary w-full">
+            Start training →
           </button>
         </div>
       )}
 
+      {/* Error state */}
       {status === 'error' && (
-        <button
-          type="button"
-          onClick={loadNext}
-          className="w-full rounded-md bg-red-500/80 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500"
-        >
-          Retry
-        </button>
+        <div className="space-y-3">
+          <div className="rounded-2xl border border-kw-red/40 bg-kw-red/10 p-4 text-center text-sm text-slate-300">
+            {message}
+          </div>
+          <button type="button" onClick={loadNext} className="btn-primary w-full">
+            Retry
+          </button>
+        </div>
       )}
-    </section>
+    </div>
   );
 }

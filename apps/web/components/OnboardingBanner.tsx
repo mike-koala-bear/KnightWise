@@ -17,38 +17,48 @@ export function OnboardingBanner({ userId }: Props) {
     let cancelled = false;
     (async () => {
       try {
-        // POST /onboarding/start is idempotent and returns current state.
         const r = await apiPost<OnboardingState>(
           `/v1/onboarding/start?user_id=${userId}`,
           {},
         );
         if (!cancelled) setState(r);
       } catch {
-        // user not yet created or API unreachable — render nothing.
+        // API unreachable or user not created yet — render nothing
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [userId]);
 
   if (!state || state.completed_at) return null;
 
+  const progress = state.attempts_so_far;
+  const max = state.max_attempts ?? 12;
+  const pct = Math.round((progress / max) * 100);
+
   return (
     <Link
-      href={{ pathname: '/onboarding' }}
-      className="block rounded-lg border border-indigo-500/40 bg-indigo-500/10 px-4 py-3 text-sm transition hover:bg-indigo-500/20"
+      href="/onboarding"
+      className="card-lift block rounded-2xl border border-kw-purple/40 bg-kw-purple/10 p-4"
     >
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <div className="font-semibold text-indigo-200">
-            Take the 10-min skill test
-          </div>
-          <div className="text-xs text-slate-400">
-            Sets your starting Elo so every drill is at the right difficulty.
-          </div>
+      <div className="flex items-start gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-kw-purple/25 text-2xl">
+          🧠
         </div>
-        <span className="text-indigo-300">→</span>
+        <div className="flex-1 min-w-0">
+          <div className="font-bold text-white">Take the skill test</div>
+          <p className="mt-0.5 text-xs text-slate-400">
+            12 adaptive puzzles → your starting Elo. Takes ~10 minutes.
+          </p>
+          {progress > 0 && (
+            <div className="mt-2">
+              <div className="mb-1 text-[10px] text-kw-purple">{progress} / {max} done</div>
+              <div className="progress-bar h-2">
+                <div className="progress-bar-fill bg-kw-purple" style={{ width: `${pct}%` }} />
+              </div>
+            </div>
+          )}
+        </div>
+        <span className="text-kw-purple text-lg">→</span>
       </div>
     </Link>
   );
