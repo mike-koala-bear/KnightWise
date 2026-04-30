@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Crown } from 'lucide-react';
 
 import { AuthNav } from '@/components/AuthNav';
 import { AuthProvider } from '@/components/AuthProvider';
@@ -18,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <header className="sticky top-0 z-40 border-b border-kw-border bg-kw-bg/95 backdrop-blur-sm">
             <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
               <div className="flex items-center gap-2">
-                <span className="text-2xl">♞</span>
+                <Crown className="h-6 w-6 text-kw-green fill-kw-green/20" />
                 <span className="text-lg font-bold tracking-tight text-white">KnightWise</span>
               </div>
               <AuthNav />

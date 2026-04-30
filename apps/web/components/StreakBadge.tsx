@@ -1,5 +1,6 @@
 'use client';
 
+import { Flame, Snowflake } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { apiGet } from '@/lib/api';
@@ -17,7 +18,7 @@ export function StreakBadge({ userId = 1, refreshKey = 0 }: Props) {
     let cancelled = false;
     apiGet<StreakOut>(`/v1/streak?user_id=${userId}`)
       .then((d) => { if (!cancelled) setData(d); })
-      .catch(() => { /* silent – show skeleton */ });
+      .catch(() => {});
     return () => { cancelled = true; };
   }, [userId, refreshKey]);
 
@@ -42,9 +43,10 @@ export function StreakBadge({ userId = 1, refreshKey = 0 }: Props) {
       }`}
       title={data.longest > data.current ? `Best: ${data.longest} days` : undefined}
     >
-      <span className="text-3xl leading-none" aria-hidden="true">
-        {hasStreak ? '🔥' : '❄️'}
-      </span>
+      {hasStreak
+        ? <Flame className="h-8 w-8 text-amber-400 fill-amber-400/30" aria-hidden="true" />
+        : <Snowflake className="h-7 w-7 text-slate-500" aria-hidden="true" />
+      }
       <div>
         <div className="flex items-baseline gap-1">
           <span
@@ -58,9 +60,7 @@ export function StreakBadge({ userId = 1, refreshKey = 0 }: Props) {
           </span>
         </div>
         {data.longest > 0 && (
-          <div className="text-[10px] text-slate-500">
-            Best: {data.longest} days
-          </div>
+          <div className="text-[10px] text-slate-500">Best: {data.longest} days</div>
         )}
       </div>
     </div>

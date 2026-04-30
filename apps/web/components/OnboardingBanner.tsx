@@ -1,5 +1,6 @@
 'use client';
 
+import { Brain, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -17,14 +18,9 @@ export function OnboardingBanner({ userId }: Props) {
     let cancelled = false;
     (async () => {
       try {
-        const r = await apiPost<OnboardingState>(
-          `/v1/onboarding/start?user_id=${userId}`,
-          {},
-        );
+        const r = await apiPost<OnboardingState>(`/v1/onboarding/start?user_id=${userId}`, {});
         if (!cancelled) setState(r);
-      } catch {
-        // API unreachable or user not created yet — render nothing
-      }
+      } catch {}
     })();
     return () => { cancelled = true; };
   }, [userId]);
@@ -36,13 +32,10 @@ export function OnboardingBanner({ userId }: Props) {
   const pct = Math.round((progress / max) * 100);
 
   return (
-    <Link
-      href="/onboarding"
-      className="card-lift block rounded-2xl border border-kw-purple/40 bg-kw-purple/10 p-4"
-    >
+    <Link href="/onboarding" className="card-lift block rounded-2xl border border-kw-purple/40 bg-kw-purple/10 p-4">
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-kw-purple/25 text-2xl">
-          🧠
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-kw-purple/25">
+          <Brain className="h-6 w-6 text-kw-purple" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="font-bold text-white">Take the skill test</div>
@@ -58,7 +51,7 @@ export function OnboardingBanner({ userId }: Props) {
             </div>
           )}
         </div>
-        <span className="text-kw-purple text-lg">→</span>
+        <ChevronRight className="h-5 w-5 text-kw-purple shrink-0 mt-0.5" />
       </div>
     </Link>
   );
