@@ -54,7 +54,13 @@ def start_sync(
 ) -> SyncStartedResponse:
     user = db.execute(select(User).where(User.id == req.user_id)).scalar_one_or_none()
     if user is None:
-        raise HTTPException(status_code=404, detail=f"user not found: {req.user_id}")
+        if req.user_id == 1:
+            user = User()
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        else:
+            raise HTTPException(status_code=404, detail=f"user not found: {req.user_id}")
 
     lichess = req.lichess_username or user.lichess_username
     chesscom = req.chesscom_username or user.chesscom_username

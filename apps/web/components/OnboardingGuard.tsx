@@ -6,14 +6,8 @@ import { useEffect, useState } from 'react';
 import { apiPost } from '@/lib/api';
 import type { OnboardingState } from '@/lib/types';
 
-type Props = {
-  children: React.ReactNode;
-};
+type Props = { children: React.ReactNode };
 
-/**
- * Wraps protected pages. Redirects to /onboarding if the user hasn't
- * completed the skill test yet. Shows nothing while checking.
- */
 export function OnboardingGuard({ children }: Props) {
   const router = useRouter();
   const [ready, setReady] = useState(false);
@@ -22,6 +16,7 @@ export function OnboardingGuard({ children }: Props) {
     let cancelled = false;
     (async () => {
       try {
+        // /onboarding/start is idempotent and returns completed_at without side-effects
         const state = await apiPost<OnboardingState>(
           '/v1/onboarding/start?user_id=1',
           {},
@@ -29,13 +24,12 @@ export function OnboardingGuard({ children }: Props) {
         if (cancelled) return;
         if (!state.completed_at) {
           router.replace('/onboarding');
-        } else {
-          setReady(true);
+          return;
         }
       } catch {
-        // API unreachable — let the page render rather than blocking forever
-        if (!cancelled) setReady(true);
+        // API unreachable — unblock rather than loop forever
       }
+      if (!cancelled) setReady(true);
     })();
     return () => { cancelled = true; };
   }, [router]);

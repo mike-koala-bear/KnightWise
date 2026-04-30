@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { OnboardingRunner } from '@/components/OnboardingRunner';
+import { OnboardingFlow } from '@/components/OnboardingFlow';
 import { apiPost } from '@/lib/api';
 import type { OnboardingState } from '@/lib/types';
 
@@ -24,7 +24,7 @@ export default function OnboardingPage() {
           router.replace('/app');
           return;
         }
-      } catch { /* API down — let them try */ }
+      } catch { /* API down — proceed */ }
       if (!cancelled) setChecked(true);
     })();
     return () => { cancelled = true; };
@@ -38,5 +38,5 @@ export default function OnboardingPage() {
     );
   }
 
-  return <OnboardingRunner userId={1} />;
+  return <OnboardingFlow />;
 }

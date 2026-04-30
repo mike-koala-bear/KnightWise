@@ -138,6 +138,55 @@ def _is_done(state: OnboardingStateOut) -> bool:
     )
 
 
+class SetupIn(BaseModel):
+    user_id: int = Field(..., ge=1)
+    lichess_username: str | None = Field(None, min_length=2, max_length=64)
+    chesscom_username: str | None = Field(None, min_length=2, max_length=64)
+
+
+class SetupOut(BaseModel):
+    user_id: int
+    lichess_username: str | None
+    chesscom_username: str | None
+
+
+class CompleteIn(BaseModel):
+    user_id: int = Field(..., ge=1)
+
+
+@router.post("/onboarding/setup", response_model=SetupOut)
+def onboarding_setup(req: SetupIn, db: DBSession) -> SetupOut:
+    """Save usernames and prepare for game-import onboarding."""
+    if not req.lichess_username and not req.chesscom_username:
+        raise HTTPException(
+            status_code=400,
+            detail="Provide at least one username (Lichess or Chess.com)",
+        )
+    user = _require_user(db, req.user_id)
+    if req.lichess_username:
+        user.lichess_username = req.lichess_username.strip()
+    if req.chesscom_username:
+        user.chesscom_username = req.chesscom_username.strip()
+    db.commit()
+    db.refresh(user)
+    return SetupOut(
+        user_id=user.id,
+        lichess_username=user.lichess_username,
+        chesscom_username=user.chesscom_username,
+    )
+
+
+@router.post("/onboarding/complete", response_model=OnboardingStateOut)
+def onboarding_complete(req: CompleteIn, db: DBSession) -> OnboardingStateOut:
+    """Mark onboarding complete after game import (bypasses puzzle check)."""
+    user = _require_user(db, req.user_id)
+    if user.onboarding_completed_at is None:
+        user.onboarding_completed_at = datetime.now(UTC).replace(tzinfo=None)
+        db.commit()
+        db.refresh(user)
+    return _state(db, user)
+
+
 @router.post("/onboarding/start", response_model=OnboardingStateOut)
 def onboarding_start(
     db: DBSession,

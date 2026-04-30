@@ -142,6 +142,12 @@ export type OnboardingAttemptOut = {
   done: boolean;
 };
 
+export type OnboardingSetupOut = {
+  user_id: number;
+  lichess_username: string | null;
+  chesscom_username: string | null;
+};
+
 export type GalaxyNode = {
   id: number;
   slug: string;
