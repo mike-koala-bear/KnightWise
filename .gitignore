@@ -37,4 +37,8 @@ __pycache__/
 # Misc
 coverage/
 .cache/
+
+# pnpm
 .pnpm-store/
+.pnpm-debug.log*
+node_modules/.pnpm-store/
